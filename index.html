@@ -1583,9 +1583,9 @@
       <div class="mini-foto-preview" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
     </div>    </div>
 
-    <div class="section-title">PARCHE / BORDADO</div>
+    <div class="section-title">PARCHE</div>
     <div id="parches-container"></div>
-    <button type="button" onclick="agregarParcheModelo('parches-container')" style="width:100%;padding:10px;border:2px dashed var(--blue);background:#f0faff;color:var(--blue);font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1.5px;border-radius:8px;cursor:pointer;margin-bottom:18px;">+ AÑADIR OTRO PARCHE / BORDADO</button>
+    <button type="button" onclick="agregarParcheModelo('parches-container')" style="width:100%;padding:10px;border:2px dashed var(--blue);background:#f0faff;color:var(--blue);font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1.5px;border-radius:8px;cursor:pointer;margin-bottom:18px;">+ AÑADIR OTRO PARCHE</button>
 
     <div class="section-title">GORRA</div>
     <div id="gorras-container"></div>
@@ -1828,11 +1828,11 @@
   <div class="field-row">
     <div class="field">
       <label>Nombre / Razón social</label>
-      <input type="text" id="e-nombre" placeholder="Empresa S.L.">
+      <input type="text" id="emp-nombre" placeholder="Empresa S.L.">
     </div>
     <div class="field" style="flex:0 0 180px">
       <label>📅 Fecha</label>
-      <input type="date" id="e-fecha">
+      <input type="date" id="emp-fecha">
     </div>
   </div>
 
@@ -2860,6 +2860,7 @@
         if (g.colorTela) d += `**Tela:** ${g.colorTela}   `;
         if (g.colorHilo) d += `**Hilo:** ${g.colorHilo}`;
         d += `\n`;
+        if (g.servicio && g.servicio.length) d += `**Servicio:** ${g.servicio.join(', ')}\n`;
         if (g.posiciones && g.posiciones.length) d += `**Posición:** ${g.posiciones.join(' · ')}\n`;
         if (g.obsTexto && g.obsTexto.trim())     d += `📝 *${g.obsTexto.trim()}*\n`;
       });
@@ -2870,7 +2871,7 @@
     const _parchesValidos = _parchesMD.filter(p => p.ancho || p.alto || p.colorHilo || p.unidades || (p.tipo && p.tipo.length));
     if (_parchesValidos.length) {
       d += sep;
-      d += `## 🪡 Parche / Bordado\n`;
+      d += `## 🪡 Parche\n`;
       _parchesValidos.forEach((p, i) => {
         if (_parchesValidos.length > 1) d += `\n**Parche ${i + 1}**\n`;
         if (p.tipo && p.tipo.length)  d += `**Tipo:** ${p.tipo.join(', ')}\n`;
@@ -3004,7 +3005,7 @@
       const el = document.getElementById(id);
       if (el) el.value = '';
     });
-    document.getElementById('e-fecha').value = new Date().toISOString().split('T')[0];
+    document.getElementById('emp-fecha').value = new Date().toISOString().split('T')[0];
     ['resp','ropapersonalizada','proveedor'].forEach(q => {
       empresaBtns[q] = null;
       document.getElementById('e-' + q + '-si').classList.remove('active');
@@ -3039,12 +3040,12 @@
     doc.text('EL PUNTAZO', 14, 13);
     doc.setFontSize(11); doc.setFont('helvetica','normal');
     doc.text('FORMULARIO EMPRESAS', 14, 21);
-    const fecha = document.getElementById('e-fecha').value
-      ? convertirFecha(document.getElementById('e-fecha').value) : '';
+    const fecha = document.getElementById('emp-fecha').value
+      ? convertirFecha(document.getElementById('emp-fecha').value) : '';
     if (fecha) { doc.setFontSize(10); doc.text(fecha, W - 14, 21, { align: 'right' }); }
     y = 36;
 
-    const nombre = document.getElementById('e-nombre').value || '—';
+    const nombre = document.getElementById('emp-nombre').value || '—';
     doc.setFillColor(...yellow);
     doc.roundedRect(10, y, W-20, 10, 2, 2, 'F');
     doc.setTextColor(...blue); doc.setFontSize(13); doc.setFont('helvetica','bold');
@@ -3266,7 +3267,7 @@
   // init fecha mostrador
   document.getElementById('m-fecha').value = new Date().toISOString().split('T')[0];
   // init fecha empresa
-  document.getElementById('e-fecha').value = new Date().toISOString().split('T')[0];
+  document.getElementById('emp-fecha').value = new Date().toISOString().split('T')[0];
 
   // ---- GRABADORA ----
   let mediaRecorder = null;
@@ -4379,6 +4380,21 @@ Reglas:
       doc.text(g.modelo || '-', 45, y + 8);
       doc.text(g.colorTela || '-', 100, y + 8);
       doc.text(g.colorHilo || '-', 150, y + 8);
+      if (g.servicio && g.servicio.length) {
+        doc.setTextColor(...softText); doc.setFontSize(8.5); doc.setFont('helvetica','normal');
+        doc.text('SERVICIO', 14, y + 14);
+        doc.setTextColor(...blue); doc.setFontSize(9.0); doc.setFont('helvetica','bold');
+        let tx3 = 40;
+        g.servicio.forEach(sv => {
+          const tw3 = doc.getTextWidth(sv) + 6;
+          doc.setFillColor(...yellow);
+          doc.roundedRect(tx3, y + 10, tw3, 6, 1.5, 1.5, 'F');
+          doc.setTextColor(...blue); doc.setFontSize(8.0); doc.setFont('helvetica','bold');
+          doc.text(sv, tx3 + 3, y + 14.5);
+          tx3 += tw3 + 3;
+        });
+        y += 8;
+      }
       if (g.posiciones && g.posiciones.length) {
         doc.setTextColor(...softText); doc.setFontSize(8.5); doc.setFont('helvetica','normal');
         doc.text('POSICIÓN', 14, y + 14);
@@ -4458,7 +4474,7 @@ Reglas:
     for (let pi = 0; pi < _parchesPDF.filter(p => p && (p.unidades || p.ancho || p.alto || p.colorHilo)).length; pi++) { const p = _parchesPDF.filter(p2 => p2 && (p2.unidades || p2.ancho || p2.alto || p2.colorHilo))[pi];
       const boxH = p.disenoMini ? 26 : 16;
       checkNewPage(10 + boxH + (p.tipo && p.tipo.length ? 6 : 0));
-      section(_parchesPDF.length > 1 ? `Parche / Bordado ${pi+1}` : 'Parche / Bordado');
+      section(_parchesPDF.length > 1 ? `Parche ${pi+1}` : 'Parche');
       if (p.tipo && p.tipo.length) {
         doc.setTextColor(...softText); doc.setFontSize(8.5); doc.setFont('helvetica','normal');
         doc.text('TIPO:', 14, y);
@@ -4956,7 +4972,7 @@ _Los plazos de entrega están sujetos a posibles variaciones por causas externas
         </div>
       </div>
       <div id="e-parches-container"></div>
-      <button type="button" onclick="agregarParcheModelo('e-parches-container')" style="width:100%;padding:10px;border:2px dashed var(--blue);background:#f0faff;color:var(--blue);font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1.5px;border-radius:8px;cursor:pointer;margin-bottom:18px;">+ AÑADIR OTRO PARCHE / BORDADO</button>
+      <button type="button" onclick="agregarParcheModelo('e-parches-container')" style="width:100%;padding:10px;border:2px dashed var(--blue);background:#f0faff;color:var(--blue);font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1.5px;border-radius:8px;cursor:pointer;margin-bottom:18px;">+ AÑADIR OTRO PARCHE</button>
 
       <div style="background:var(--blue);color:white;font-family:Bebas Neue,sans-serif;font-size:14px;letter-spacing:1.5px;padding:6px 12px;border-radius:4px;margin:16px 0 10px;">GORRA</div>
       <div id="e-gorras-container"></div>
@@ -5078,6 +5094,9 @@ _Los plazos de entrega están sujetos a posibles variaciones por causas externas
           <label class="check-item"><input type="checkbox" value="Velcro"><div class="box"></div>Velcro</label>
           <label class="check-item"><input type="checkbox" value="Adhesivo"><div class="box"></div>Adhesivo</label>
           <label class="check-item"><input type="checkbox" value="Coser"><div class="box"></div>Coser</label>
+          <label class="check-item"><input type="checkbox" value="Bordado"><div class="box"></div>Bordado</label>
+          <label class="check-item"><input type="checkbox" value="Sublimación"><div class="box"></div>Sublimación</label>
+          <label class="check-item"><input type="checkbox" value="PVC"><div class="box"></div>PVC</label>
         </div>
         <div class="field-row" style="gap:8px">
           <div class="field" style="flex:0 0 70px;min-width:0"><label>Unidades</label><input type="number" class="p-ud" placeholder="0" min="0"></div>
@@ -5189,6 +5208,10 @@ _Los plazos de entrega están sujetos a posibles variaciones por causas externas
           <div class="field" style="flex:1;min-width:0"><label>Color tela</label><input type="text" class="g-tela" placeholder="Color"></div>
           <div class="field" style="flex:1;min-width:0"><label>Color hilo</label><input type="text" class="g-hilo" placeholder="Color"></div>
         </div>
+        <div class="check-group gorra-servicio" style="margin:8px 0 6px;" onclick="toggleCheckEdit(event)">
+          <label class="check-item"><input type="checkbox" value="Bordado"><div class="box"></div>Bordado</label>
+          <label class="check-item"><input type="checkbox" value="DTF"><div class="box"></div>DTF</label>
+        </div>
         <div style="font-size:12px;color:var(--text-soft);margin:8px 0 6px;font-weight:600;">Posición en gorra — pulsa para seleccionar:</div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
           ${['Frente','L.Izquierdo','Trasera','L.Derecho'].map(v=>`
@@ -5246,6 +5269,7 @@ _Los plazos de entrega están sujetos a posibles variaciones por causas externas
         modelo: b.querySelector('.g-modelo').value,
         colorTela: b.querySelector('.g-tela').value,
         colorHilo: b.querySelector('.g-hilo').value,
+        servicio: [...b.querySelectorAll('.gorra-servicio input:checked')].map(i => i.value),
         posiciones: [...b.querySelectorAll('.posiciones-gorra input:checked')].map(i => i.value),
         obsTexto: (b.querySelector('.g-obs') ? b.querySelector('.g-obs').value.trim() : ''),
         fotos: getMiniSectionFotos(b.querySelector('.mini-foto-preview') ? b.querySelector('.mini-foto-preview').parentElement : null),
@@ -5265,6 +5289,10 @@ _Los plazos de entrega están sujetos a posibles variaciones por causas externas
         block.querySelector('.g-tela').value = g.colorTela || '';
         block.querySelector('.g-hilo').value = g.colorHilo || '';
         if (block.querySelector('.g-obs')) block.querySelector('.g-obs').value = g.obsTexto || '';
+        (g.servicio || []).forEach(v => {
+          const cb = [...block.querySelectorAll('.gorra-servicio input')].find(i => i.value === v);
+          if (cb) { cb.checked = true; cb.closest('label').classList.add('checked'); }
+        });
         (g.posiciones || []).forEach(v => {
           const cb = block.querySelector(`.posiciones-gorra input[value="${CSS.escape(v)}"]`);
           if (cb) { cb.checked = true; cb.closest('label').classList.add('checked'); }
