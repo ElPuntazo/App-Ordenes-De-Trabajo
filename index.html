@@ -5202,15 +5202,15 @@ _Los plazos de entrega están sujetos a posibles variaciones por causas externas
           <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1.5px;color:var(--blue);">MODELO ${num}</div>
           <button type="button" class="btn-eliminar-gorra" onclick="eliminarGorraModelo(this)" style="background:#fee;border:1px solid #c33;color:#c33;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;font-weight:600;${idx===0?'display:none;':''}">✕ Eliminar</button>
         </div>
+        <div class="check-group gorra-servicio" style="margin-bottom:8px;" onclick="toggleCheckEdit(event)">
+          <label class="check-item"><input type="checkbox" value="Bordado"><div class="box"></div>Bordado</label>
+          <label class="check-item"><input type="checkbox" value="DTF"><div class="box"></div>DTF</label>
+        </div>
         <div class="field-row" style="gap:8px">
           <div class="field" style="flex:0 0 70px;min-width:0"><label>Unidades</label><input type="number" class="g-ud" placeholder="0" min="0"></div>
           <div class="field" style="flex:1;min-width:0"><label>Modelo</label><input type="text" class="g-modelo" placeholder="Modelo"></div>
           <div class="field" style="flex:1;min-width:0"><label>Color tela</label><input type="text" class="g-tela" placeholder="Color"></div>
           <div class="field" style="flex:1;min-width:0"><label>Color hilo</label><input type="text" class="g-hilo" placeholder="Color"></div>
-        </div>
-        <div class="check-group gorra-servicio" style="margin:8px 0 6px;" onclick="toggleCheckEdit(event)">
-          <label class="check-item"><input type="checkbox" value="Bordado"><div class="box"></div>Bordado</label>
-          <label class="check-item"><input type="checkbox" value="DTF"><div class="box"></div>DTF</label>
         </div>
         <div style="font-size:12px;color:var(--text-soft);margin:8px 0 6px;font-weight:600;">Posición en gorra — pulsa para seleccionar:</div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
