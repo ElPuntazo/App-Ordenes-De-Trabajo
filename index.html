@@ -2645,20 +2645,34 @@
   }
 
   // Sube una imagen PNG (dataURL) como adjunto a una tarjeta de Trello
-  async function _uploadTrelloAttachment(cardId, dataURL, filename, cfg) {
-    const blob = dataURLtoBlob(dataURL);
-    const fd = new FormData();
-    fd.append('key', cfg.apiKey);
-    fd.append('token', cfg.token);
-    fd.append('name', filename);
-    fd.append('file', blob, filename);
-    const r = await fetch(`https://api.trello.com/1/cards/${cardId}/attachments`, {
-      method: 'POST',
-      body: fd,
-    });
-    if (!r.ok) {
-      const txt = await r.text().catch(() => r.status);
-      console.warn(`Trello attachment error (${filename}):`, txt);
+  async function _uploadTrelloAttachment(cardId, src, filename, cfg) {
+    try {
+      let blob;
+      if (src && src.startsWith('data:')) {
+        blob = dataURLtoBlob(src);
+      } else if (src && src.startsWith('http')) {
+        // URL de Cloudinary — descargar y subir
+        const res = await fetch(src);
+        if (!res.ok) return;
+        blob = await res.blob();
+      } else {
+        return;
+      }
+      const fd = new FormData();
+      fd.append('key', cfg.apiKey);
+      fd.append('token', cfg.token);
+      fd.append('name', filename);
+      fd.append('file', blob, filename);
+      const r = await fetch(`https://api.trello.com/1/cards/${cardId}/attachments`, {
+        method: 'POST',
+        body: fd,
+      });
+      if (!r.ok) {
+        const txt = await r.text().catch(() => r.status);
+        console.warn(`Trello attachment error (${filename}):`, txt);
+      }
+    } catch(e) {
+      console.warn(`Trello attachment exception (${filename}):`, e);
     }
   }
 
@@ -2721,33 +2735,68 @@
       const card = await res.json();
       const cardId = card.id;
 
-      // ── SUBIR IMÁGENES DE POSICIÓN DE ESTAMPADO ────────────────
-      // Recoger todas las imágenes disponibles en orden
+      // ── RECOGER TODAS LAS IMÁGENES ─────────────────────────────
       const imagenes = [];
 
-      // Prendas con mockup (mockupSvgs: [{prenda, png, zonas}])
+      // Mockups de posición de estampado
       if (order.mockupSvgs && order.mockupSvgs.length) {
         order.mockupSvgs.forEach(m => {
-          if (m.png) imagenes.push({ png: m.png, nombre: `Estampado_${m.prenda.replace(/\s+/g,'_')}.png` });
+          if (m.png) imagenes.push({ src: m.png, nombre: `Estampado_${(m.prenda||'prenda').replace(/\s+/g,'_')}.png` });
         });
       } else if (order.mockupSvg) {
-        // compat versión anterior (una sola imagen)
-        imagenes.push({ png: order.mockupSvg, nombre: 'Estampado_Posicion.png' });
+        imagenes.push({ src: order.mockupSvg, nombre: 'Estampado_Posicion.png' });
       }
 
-      // Gorras con mockup
+      // Fotos generales del diseño
+      (order.fotos || []).filter(f => f && (f.url || f.data) && f.type && f.type.startsWith('image/')).forEach((f, i) => {
+        const ext = f.type.includes('png') ? 'png' : 'jpg';
+        imagenes.push({ src: f.url || f.data, nombre: `Diseno_${i+1}.${ext}` });
+      });
+
+      // Fotos de estampado generales
+      (order.fotosEstampado || []).filter(f => f && (f.url || f.data) && f.type && f.type.startsWith('image/')).forEach((f, i) => {
+        const ext = f.type.includes('png') ? 'png' : 'jpg';
+        imagenes.push({ src: f.url || f.data, nombre: `Estampado_foto_${i+1}.${ext}` });
+      });
+
+      // Fotos por prenda
+      Object.entries(order.fotosPrendas || {}).forEach(([prenda, fotos]) => {
+        (fotos || []).filter(f => f && (f.url || f.data) && f.type && f.type.startsWith('image/')).forEach((f, i) => {
+          const ext = f.type.includes('png') ? 'png' : 'jpg';
+          imagenes.push({ src: f.url || f.data, nombre: `${prenda}_foto_${i+1}.${ext}` });
+        });
+      });
+
+      // Gorras: mockup + fotos
       const _gorrasImg = order.gorras || (order.gorra ? [order.gorra] : []);
-      _gorrasImg.forEach((g, i) => {
-        if (g.mockupPng) {
-          const label = g.modelo ? g.modelo.replace(/\s+/g,'_') : `Modelo_${i+1}`;
-          imagenes.push({ png: g.mockupPng, nombre: `Gorra_${label}.png` });
-        }
+      _gorrasImg.forEach((g, gi) => {
+        const label = g.modelo ? g.modelo.replace(/\s+/g,'_') : `Modelo_${gi+1}`;
+        if (g.mockupPng) imagenes.push({ src: g.mockupPng, nombre: `Gorra_${label}_mockup.png` });
+        (g.fotos || []).filter(f => f && (f.url || f.data) && f.type && f.type.startsWith('image/')).forEach((f, i) => {
+          const ext = f.type.includes('png') ? 'png' : 'jpg';
+          imagenes.push({ src: f.url || f.data, nombre: `Gorra_${label}_foto_${i+1}.${ext}` });
+        });
+      });
+
+      // Parches: fotos
+      const _parchesImg = order.parches || (order.parche ? [order.parche] : []);
+      _parchesImg.forEach((p, pi) => {
+        (p.fotos || []).filter(f => f && (f.url || f.data) && f.type && f.type.startsWith('image/')).forEach((f, i) => {
+          const ext = f.type.includes('png') ? 'png' : 'jpg';
+          imagenes.push({ src: f.url || f.data, nombre: `Parche_${pi+1}_foto_${i+1}.${ext}` });
+        });
+      });
+
+      // Fotos otros trabajos
+      (order.fotosOtros || []).filter(f => f && (f.url || f.data) && f.type && f.type.startsWith('image/')).forEach((f, i) => {
+        const ext = f.type.includes('png') ? 'png' : 'jpg';
+        imagenes.push({ src: f.url || f.data, nombre: `Otros_foto_${i+1}.${ext}` });
       });
 
       if (imagenes.length) {
         if (btn) btn.textContent = `⏳ Subiendo ${imagenes.length} imagen${imagenes.length > 1 ? 'es' : ''}...`;
         for (const img of imagenes) {
-          await _uploadTrelloAttachment(cardId, img.png, img.nombre, cfg);
+          await _uploadTrelloAttachment(cardId, img.src, img.nombre, cfg);
         }
       }
       // ───────────────────────────────────────────────────────────
@@ -2783,6 +2832,7 @@
     d += `**Fecha pedido:** ${o.fecha}`;
     if (o.vence) d += ` | ⏰ **Vence:** ${o.vence}`;
     d += `\n**Entrega:** ${o.entrega === 'recoge' ? '📦 Recoge en tienda' : '🚚 Envío a domicilio'}\n`;
+    if (o.productoAportado && o.productoAportado.length) d += `**Producto aportado:** ${o.productoAportado.join(' + ')}\n`;
 
     // ── DATOS DE ENVÍO (si aplica) ────────────────────────────────
     if (o.entrega === 'envio' && o.envio) {
@@ -2882,6 +2932,7 @@
         if (p.colorHilo) detalles.push(`Hilo: ${p.colorHilo}`);
         if (p.disenoMini) detalles.push(`Mini: ${p.disenoMini}`);
         if (detalles.length) d += detalles.join('   |   ') + '\n';
+        if (p.posicion && p.posicion.length) d += `**Posición:** ${p.posicion.join(' · ')}\n`;
         if (p.obs && p.obs.trim()) d += `📝 *${p.obs.trim()}*\n`;
       });
     }
