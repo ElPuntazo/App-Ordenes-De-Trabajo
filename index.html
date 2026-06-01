@@ -1186,6 +1186,18 @@
       <textarea id="f-trabajo" placeholder="Describe el trabajo a realizar..."></textarea>
     </div>
 
+    <div class="section-title">PRODUCTO APORTADO</div>
+    <div class="check-group" id="producto-aportado" style="gap:10px;">
+      <label class="check-item">
+        <input type="checkbox" id="f-aportado-puntazo" value="El Puntazo">
+        <div class="box"></div>El Puntazo
+      </label>
+      <label class="check-item">
+        <input type="checkbox" id="f-aportado-cliente" value="El Cliente">
+        <div class="box"></div>El Cliente
+      </label>
+    </div>
+
     <div class="section-title">PRODUCTO</div>
     <div class="check-group" id="productos">
       <label class="check-item"><input type="checkbox" value="Camiseta"><div class="box"></div>Camiseta</label>
@@ -2280,6 +2292,7 @@
       cliente: { nombre, telefono: document.getElementById('f-telefono').value },
       obs: document.getElementById('f-obs').value,
       trabajo: document.getElementById('f-trabajo').value,
+      productoAportado: [...document.querySelectorAll('#producto-aportado input:checked')].map(c => c.value),
       productos: getChecked('productos'),
       servicios: getChecked('servicios'),
       posiciones: getChecked('posiciones'),
@@ -3538,6 +3551,9 @@ Reglas:
       if (orden.fecha_entrega)  { const v = document.getElementById('f-vence'); if(v) v.value = orden.fecha_entrega; }
       if (orden.obs)            { const o = document.getElementById('f-obs'); if(o) o.value = (o.value ? o.value + '\n' : '') + orden.obs; }
       if (orden.trabajo)        { const t = document.getElementById('f-trabajo'); if(t) t.value = orden.trabajo; }
+      document.querySelectorAll('#producto-aportado input').forEach(cb => {
+        cb.checked = (orden.productoAportado || []).includes(cb.value);
+      });
 
       // Entrega
       if (orden.entrega) {
@@ -3738,6 +3754,7 @@ Reglas:
     document.getElementById('e-nombre').value = o.cliente.nombre || '';
     document.getElementById('e-telefono').value = o.cliente.telefono || '';
     document.getElementById('e-trabajo').value = o.trabajo || '';
+    document.querySelectorAll('#e-producto-aportado input').forEach(cb => { cb.checked = (o.productoAportado || []).includes(cb.value); });
     document.getElementById('e-obs').value = o.obs || '';
     document.getElementById('e-otros').value = o.otros || '';
     document.getElementById('e-color-diseno').value = o.colorDiseno || '';
@@ -3804,6 +3821,7 @@ Reglas:
     o.cliente.nombre = document.getElementById('e-nombre').value.trim();
     o.cliente.telefono = document.getElementById('e-telefono').value.trim();
     o.trabajo = document.getElementById('e-trabajo').value;
+    o.productoAportado = [...document.querySelectorAll('#e-producto-aportado input:checked')].map(c => c.value);
     o.obs = document.getElementById('e-obs').value;
     o.otros = document.getElementById('e-otros').value;
     o.colorDiseno = document.getElementById('e-color-diseno').value;
@@ -3974,6 +3992,13 @@ Reglas:
     doc.setFontSize(10.0);
     doc.setFont('helvetica', 'bold');
     doc.text(order.entrega === 'recoge' ? 'Recoge en tienda' : 'Envio a domicilio', 14, y + 19);
+
+    if (order.productoAportado && order.productoAportado.length) {
+      doc.setTextColor(...softText); doc.setFontSize(8.5); doc.setFont('helvetica','normal');
+      doc.text('PRODUCTO APORTADO', 110, y + 14);
+      doc.setTextColor(...darkText); doc.setFontSize(10.0); doc.setFont('helvetica','bold');
+      doc.text(order.productoAportado.join(' + '), 110, y + 19);
+    }
 
     y += 26;
 
@@ -4798,6 +4823,8 @@ Te confirmamos tu pedido en *El Puntazo*:
 *Trabajo:* ${order.trabajo}` : ''}${order.obs ? `
 *Notas:* ${order.obs}` : ''}
 
+_Los plazos de entrega están sujetos a posibles variaciones por causas externas a la empresa. En caso de producirse alguna incidencia, se informará de inmediato._
+
 ¡Gracias por confiar en nosotros!`;
 
     const url = `https://wa.me/${tel}?text=${encodeURIComponent(msg)}`;
@@ -4847,6 +4874,12 @@ Te confirmamos tu pedido en *El Puntazo*:
       <div class="field">
         <label>Descripción del trabajo</label>
         <textarea id="e-trabajo" style="min-height:70px"></textarea>
+      </div>
+
+      <div style="background:var(--blue);color:white;font-family:Bebas Neue,sans-serif;font-size:14px;letter-spacing:1.5px;padding:6px 12px;border-radius:4px;margin:16px 0 10px;">PRODUCTO APORTADO</div>
+      <div class="check-group" id="e-producto-aportado" style="gap:10px;">
+        <label class="check-item"><input type="checkbox" value="El Puntazo"><div class="box"></div>El Puntazo</label>
+        <label class="check-item"><input type="checkbox" value="El Cliente"><div class="box"></div>El Cliente</label>
       </div>
 
       <div style="background:var(--blue);color:white;font-family:Bebas Neue,sans-serif;font-size:14px;letter-spacing:1.5px;padding:6px 12px;border-radius:4px;margin:16px 0 10px;">PRODUCTO</div>
