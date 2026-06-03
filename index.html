@@ -340,6 +340,7 @@
     border-radius: 3px;
     background: white;
     flex-shrink: 0;
+    pointer-events: none;
   }
   .check-item.checked .box { background: var(--yellow); border-color: var(--yellow); }
 
@@ -1340,30 +1341,31 @@
       };
 
       /* Click directo en div.prod-check-item — sin checkbox, sin doble disparo */
+      const _descMapAll = {
+        'prod-grp-ropa':    'prod-desc-ropa',
+        'prod-grp-merch':   'prod-desc-merch',
+        'prod-grp-bebe':    'prod-desc-bebe',
+        'e-prod-grp-ropa':  'e-prod-desc-ropa',
+        'e-prod-grp-merch': 'e-prod-desc-merch',
+        'e-prod-grp-bebe':  'e-prod-desc-bebe',
+      };
       function prodItemClick(el) {
+        /* Asegurarse de que el es el div.prod-check-item, no un hijo */
+        if (!el.classList.contains('prod-check-item')) el = el.closest('.prod-check-item');
+        if (!el) return;
         const grp = el.closest('.prod-check-group');
         if (!grp) return;
-        // Buscar área de descripción (formulario principal o modal edición)
-        const descMapMain = {
-          'prod-grp-ropa':  'prod-desc-ropa',
-          'prod-grp-merch': 'prod-desc-merch',
-          'prod-grp-bebe':  'prod-desc-bebe',
-        };
-        const descMapEdit = {
-          'e-prod-grp-ropa':  'e-prod-desc-ropa',
-          'e-prod-grp-merch': 'e-prod-desc-merch',
-          'e-prod-grp-bebe':  'e-prod-desc-bebe',
-        };
-        const descAreaId = descMapMain[grp.id] || descMapEdit[grp.id];
-        const descArea = descAreaId ? document.getElementById(descAreaId) : null;
+        const descArea = document.getElementById(_descMapAll[grp.id] || '');
         const val = el.querySelector('input').value;
         if (el.classList.contains('checked')) {
+          /* QUITAR */
           el.classList.remove('checked');
           if (descArea) {
             const row = descArea.querySelector('[data-prod="' + CSS.escape(val) + '"]');
             if (row) row.remove();
           }
         } else {
+          /* AÑADIR */
           el.classList.add('checked');
           if (descArea && !descArea.querySelector('[data-prod="' + CSS.escape(val) + '"]')) {
             const row = document.createElement('div');
