@@ -1317,39 +1317,14 @@
         transition: background 0.15s;
       }
       .prod-cat-header:hover { background: #2a4fba; }
-      .prod-cat-arrow {
-        font-size:11px; transition: transform 0.2s; display:inline-block;
-      }
+      .prod-cat-arrow { font-size:11px; transition: transform 0.2s; display:inline-block; }
       .prod-cat-header.open .prod-cat-arrow { transform: rotate(180deg); }
       .producto-cat-panel {
-        overflow: hidden;
-        max-height: 0;
+        overflow: hidden; max-height: 0;
         transition: max-height 0.25s ease, padding 0.2s ease;
         padding: 0 4px !important;
       }
-      .producto-cat-panel.open {
-        max-height: 600px;
-        padding: 10px 4px 4px !important;
-      }
-      /* Botón X en cada prod-check-item seleccionado */
-      .prod-check-item.checked .prod-remove-btn {
-        display: inline-flex;
-      }
-      .prod-remove-btn {
-        display: none;
-        align-items: center;
-        justify-content: center;
-        margin-left: 4px;
-        width: 14px;
-        height: 14px;
-        font-size: 10px;
-        line-height: 1;
-        color: white;
-        background: #e03535;
-        border-radius: 50%;
-        cursor: pointer;
-        flex-shrink: 0;
-      }
+      .producto-cat-panel.open { max-height: 700px; padding: 10px 4px 4px !important; }
     </style>
 
     <script>
@@ -1360,15 +1335,6 @@
         const isOpen = panel.classList.contains('open');
         panel.classList.toggle('open', !isOpen);
         headerEl.classList.toggle('open', !isOpen);
-      }
-      /* Abre el acordeón de la categoría padre cuando se selecciona un item */
-      function _ensureProdCatOpen(labelEl) {
-        const panel = labelEl.closest('.producto-cat-panel');
-        if (panel && !panel.classList.contains('open')) {
-          panel.classList.add('open');
-          const header = panel.previousElementSibling;
-          if (header) header.classList.add('open');
-        }
       }
 
       /* Map item value → which desc area (grp id → desc div id) */
@@ -1384,27 +1350,28 @@
       }
       function toggleProdItem(labelEl, e) {
         e.preventDefault();
-        const wasChecked = labelEl.classList.contains('checked');
-        labelEl.classList.toggle('checked', !wasChecked);
-        const cb = labelEl.querySelector('input[type=checkbox]');
-        if (cb) cb.checked = !wasChecked;
+        e.stopPropagation();
+        const isChecked = labelEl.classList.contains('checked');
         const val = labelEl.querySelector('input').value;
         const descArea = _prodDescAreaForItem(labelEl);
-        if (!descArea) return;
-        if (!wasChecked) {
-          // Seleccionar: añadir textarea
-          if (!descArea.querySelector(`[data-prod="${CSS.escape(val)}"]`)) {
+        if (isChecked) {
+          labelEl.classList.remove('checked');
+          labelEl.querySelector('input').checked = false;
+          if (descArea) {
+            const row = descArea.querySelector('[data-prod="' + CSS.escape(val) + '"]');
+            if (row) row.remove();
+          }
+        } else {
+          labelEl.classList.add('checked');
+          labelEl.querySelector('input').checked = true;
+          if (descArea && !descArea.querySelector('[data-prod="' + CSS.escape(val) + '"]')) {
             const row = document.createElement('div');
             row.className = 'prod-desc-row';
             row.dataset.prod = val;
-            row.innerHTML = `<span class="prod-desc-label">${val}</span><textarea placeholder="Descripción de ${val}..." rows="2" data-prod-desc="${val}"></textarea>`;
+            row.innerHTML = '<span class="prod-desc-label">' + val + '</span><textarea placeholder="Descripción de ' + val + '..." rows="2" data-prod-desc="' + val + '"></textarea>';
             descArea.appendChild(row);
             row.querySelector('textarea').focus();
           }
-        } else {
-          // Deseleccionar: quitar textarea
-          const row = descArea.querySelector(`[data-prod="${CSS.escape(val)}"]`);
-          if (row) row.remove();
         }
       }
       /* Lee las descripciones del formulario principal */
@@ -1431,15 +1398,6 @@
           row.innerHTML = `<span class="prod-desc-label">${val}</span><textarea placeholder="Descripción de ${val}..." rows="2" data-prod-desc="${val}">${descs[val]}</textarea>`;
           area.appendChild(row);
         });
-        // Abrir acordeón si hay items
-        if (checked.length > 0) {
-          const panel = area.closest('.producto-cat-panel');
-          if (panel) {
-            panel.classList.add('open');
-            const header = panel.previousElementSibling;
-            if (header) header.classList.add('open');
-          }
-        }
       }
     </script>
 
@@ -4117,27 +4075,29 @@ Reglas:
   function toggleProdItemEdit(labelEl, e) {
     e.preventDefault();
     e.stopPropagation();
-    const wasChecked = labelEl.classList.contains('checked');
-    labelEl.classList.toggle('checked', !wasChecked);
-    const cb = labelEl.querySelector('input[type=checkbox]');
-    if (cb) cb.checked = !wasChecked;
+    const isChecked = labelEl.classList.contains('checked');
     const val = labelEl.querySelector('input').value;
     const grp = labelEl.closest('.prod-check-group');
     if (!grp) return;
     const descArea = document.getElementById(_editProdDescMap[grp.id]);
-    if (!descArea) return;
-    if (!wasChecked) {
-      if (!descArea.querySelector(`[data-prod="${CSS.escape(val)}"]`)) {
+    if (isChecked) {
+      labelEl.classList.remove('checked');
+      labelEl.querySelector('input').checked = false;
+      if (descArea) {
+        const row = descArea.querySelector('[data-prod="' + CSS.escape(val) + '"]');
+        if (row) row.remove();
+      }
+    } else {
+      labelEl.classList.add('checked');
+      labelEl.querySelector('input').checked = true;
+      if (descArea && !descArea.querySelector('[data-prod="' + CSS.escape(val) + '"]')) {
         const row = document.createElement('div');
         row.className = 'prod-desc-row';
         row.dataset.prod = val;
-        row.innerHTML = `<span class="prod-desc-label">${val}</span><textarea placeholder="Descripción de ${val}..." rows="2" data-prod-desc="${val}"></textarea>`;
+        row.innerHTML = '<span class="prod-desc-label">' + val + '</span><textarea placeholder="Descripción de ' + val + '..." rows="2" data-prod-desc="' + val + '"></textarea>';
         descArea.appendChild(row);
         row.querySelector('textarea').focus();
       }
-    } else {
-      const row = descArea.querySelector(`[data-prod="${CSS.escape(val)}"]`);
-      if (row) row.remove();
     }
   }
 
