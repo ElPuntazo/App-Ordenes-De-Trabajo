@@ -1349,12 +1349,18 @@
         'e-prod-grp-merch': 'e-prod-desc-merch',
         'e-prod-grp-bebe':  'e-prod-desc-bebe',
       };
+      /* Mapa por elemento individual para debounce preciso */
+      const _prodClickTimers = new WeakMap();
       function prodItemClick(el, ev) {
         /* Parar propagación para evitar doble disparo */
-        if (ev) ev.stopPropagation();
+        if (ev) { ev.stopPropagation(); ev.preventDefault(); }
         /* Asegurarse de que el es el div.prod-check-item, no un hijo */
         if (!el.classList.contains('prod-check-item')) el = el.closest('.prod-check-item');
         if (!el) return;
+        /* Debounce por elemento: ignorar si ya se procesó hace menos de 300ms */
+        if (_prodClickTimers.get(el)) return;
+        _prodClickTimers.set(el, true);
+        setTimeout(() => _prodClickTimers.delete(el), 300);
         const grp = el.closest('.prod-check-group');
         if (!grp) return;
         const descArea = document.getElementById(_descMapAll[grp.id] || '');
