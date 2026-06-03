@@ -1306,6 +1306,22 @@
         transition: border-color 0.15s;
       }
       .prod-desc-row textarea:focus { border-color: var(--blue); outline: none; }
+      .prod-desc-remove {
+        background: none;
+        border: 1.5px solid var(--gray-line);
+        border-radius: 50%;
+        width: 22px; height: 22px;
+        min-width: 22px;
+        color: var(--text-soft);
+        font-size: 13px;
+        cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        margin-top: 6px;
+        transition: all 0.15s;
+        line-height: 1;
+        padding: 0;
+      }
+      .prod-desc-remove:hover { background: var(--red); border-color: var(--red); color: white; }
       body.dark-mode .prod-desc-row textarea { background: #1a1d2e; color: #e8eaf6; border-color: #2e3246; }
       body.dark-mode .prod-desc-row .prod-desc-label { color: #7ba3f5; }
       .prod-cat-header {
@@ -1354,27 +1370,41 @@
         el._prodBusy = true;
         setTimeout(function(){ el._prodBusy = false; }, 50);
 
+        /* Solo añadir — para quitar usar la X del desplegable */
+        if (el.classList.contains('checked')) return;
+
         const grp = el.closest('.prod-check-group');
         if (!grp) return;
         const descArea = document.getElementById(_descMapAll[grp.id] || '');
         const val = el.querySelector('input').value;
 
-        if (el.classList.contains('checked')) {
-          el.classList.remove('checked');
-          if (descArea) {
-            const row = descArea.querySelector('[data-prod="' + CSS.escape(val) + '"]');
-            if (row) row.remove();
-          }
-        } else {
-          el.classList.add('checked');
-          if (descArea && !descArea.querySelector('[data-prod="' + CSS.escape(val) + '"]')) {
-            const row = document.createElement('div');
-            row.className = 'prod-desc-row';
-            row.dataset.prod = val;
-            row.innerHTML = '<span class="prod-desc-label">' + val + '</span><textarea placeholder="Descripción de ' + val + '..." rows="2" data-prod-desc="' + val + '"></textarea>';
-            descArea.appendChild(row);
+        el.classList.add('checked');
+        if (descArea && !descArea.querySelector('[data-prod="' + CSS.escape(val) + '"]')) {
+          const row = document.createElement('div');
+          row.className = 'prod-desc-row';
+          row.dataset.prod = val;
+          row.innerHTML = '<span class="prod-desc-label">' + val + '</span>'
+            + '<textarea placeholder="Descripción de ' + val + '..." rows="2" data-prod-desc="' + val + '"></textarea>'
+            + '<button class="prod-desc-remove" title="Quitar" onclick="removeProdItem(this)">✕</button>';
+          descArea.appendChild(row);
+        }
+      }
+
+      function removeProdItem(btn) {
+        const row = btn.closest('.prod-desc-row');
+        if (!row) return;
+        const val = row.dataset.prod;
+        /* Desmarcar el chip */
+        const area = row.closest('.prod-desc-area');
+        if (area) {
+          /* Buscar el grupo hermano */
+          const panel = area.closest('.producto-cat-panel');
+          if (panel) {
+            const chip = panel.querySelector('.prod-check-item input[value="' + val.replace(/"/g, '\"') + '"]');
+            if (chip) chip.closest('.prod-check-item').classList.remove('checked');
           }
         }
+        row.remove();
       }
       /* Lee las descripciones del formulario principal */
       function getProdDescs(containerId) {
@@ -1397,7 +1427,7 @@
           const row = document.createElement('div');
           row.className = 'prod-desc-row';
           row.dataset.prod = val;
-          row.innerHTML = `<span class="prod-desc-label">${val}</span><textarea placeholder="Descripción de ${val}..." rows="2" data-prod-desc="${val}">${descs[val]}</textarea>`;
+          row.innerHTML = `<span class="prod-desc-label">${val}</span><textarea placeholder="Descripción de ${val}..." rows="2" data-prod-desc="${val}">${descs[val]}</textarea><button class="prod-desc-remove" title="Quitar" onclick="removeProdItem(this)">✕</button>`;
           area.appendChild(row);
         });
       }
