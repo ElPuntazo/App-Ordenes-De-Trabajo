@@ -1199,20 +1199,90 @@
     </div>
 
     <div class="section-title">PRODUCTO</div>
-    <div class="check-group" id="productos">
-      <label class="check-item"><input type="checkbox" value="Camiseta"><div class="box"></div>Camiseta</label>
-      <label class="check-item"><input type="checkbox" value="Camisa"><div class="box"></div>Camisa</label>
-      <label class="check-item"><input type="checkbox" value="Hoodie"><div class="box"></div>Hoodie</label>
-      <label class="check-item"><input type="checkbox" value="Sudadera"><div class="box"></div>Sudadera</label>
-      <label class="check-item"><input type="checkbox" value="Polo"><div class="box"></div>Polo</label>
-      <label class="check-item"><input type="checkbox" value="Bolsillo"><div class="box"></div>Bolsillo</label>
-      <label class="check-item"><input type="checkbox" value="Pantalón"><div class="box"></div>Pantalón</label>
-      <label class="check-item"><input type="checkbox" value="Abrigo"><div class="box"></div>Abrigo</label>
-      <label class="check-item"><input type="checkbox" value="Polar"><div class="box"></div>Polar</label>
-      <label class="check-item"><input type="checkbox" value="Chaleco"><div class="box"></div>Chaleco</label>
-      <label class="check-item"><input type="checkbox" value="Bata"><div class="box"></div>Bata</label>
-      <label class="check-item"><input type="checkbox" value="Otros"><div class="box"></div>Otros</label>
+
+    <!-- Categorías desplegables de producto -->
+    <div id="productos" style="margin-bottom:10px;">
+
+      <!-- ROPA -->
+      <div class="producto-cat" style="margin-bottom:8px;">
+        <button type="button" class="producto-cat-btn" onclick="toggleProductoCat('cat-ropa', this)" style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:9px 14px;background:var(--blue);color:white;border:none;border-radius:6px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1.5px;">
+          <span>👕 ROPA</span>
+          <span class="cat-arrow" style="font-size:12px;transition:transform 0.2s;">▼</span>
+        </button>
+        <div id="cat-ropa" class="producto-cat-panel" style="display:none;padding:10px 4px 4px;animation:fadeIn 0.2s ease;">
+          <div class="check-group">
+            <label class="check-item"><input type="checkbox" value="Camiseta"><div class="box"></div>Camiseta</label>
+            <label class="check-item"><input type="checkbox" value="Camisa"><div class="box"></div>Camisa</label>
+            <label class="check-item"><input type="checkbox" value="Hoodie"><div class="box"></div>Hoodie</label>
+            <label class="check-item"><input type="checkbox" value="Sudadera"><div class="box"></div>Sudadera</label>
+            <label class="check-item"><input type="checkbox" value="Polo"><div class="box"></div>Polo</label>
+            <label class="check-item"><input type="checkbox" value="Bolsillo"><div class="box"></div>Bolsillo</label>
+            <label class="check-item"><input type="checkbox" value="Pantalón"><div class="box"></div>Pantalón</label>
+            <label class="check-item"><input type="checkbox" value="Abrigo"><div class="box"></div>Abrigo</label>
+            <label class="check-item"><input type="checkbox" value="Polar"><div class="box"></div>Polar</label>
+            <label class="check-item"><input type="checkbox" value="Chaleco"><div class="box"></div>Chaleco</label>
+            <label class="check-item"><input type="checkbox" value="Bata"><div class="box"></div>Bata</label>
+            <label class="check-item"><input type="checkbox" value="Otros"><div class="box"></div>Otros</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- MERCHANDISING -->
+      <div class="producto-cat" style="margin-bottom:8px;">
+        <button type="button" class="producto-cat-btn" onclick="toggleProductoCat('cat-merch', this)" style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:9px 14px;background:var(--blue);color:white;border:none;border-radius:6px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1.5px;">
+          <span>🛍️ MERCHANDISING</span>
+          <span class="cat-arrow" style="font-size:12px;transition:transform 0.2s;">▼</span>
+        </button>
+        <div id="cat-merch" class="producto-cat-panel" style="display:none;padding:10px 4px 4px;animation:fadeIn 0.2s ease;">
+          <div class="check-group">
+            <label class="check-item"><input type="checkbox" value="Taza"><div class="box"></div>Taza</label>
+            <label class="check-item"><input type="checkbox" value="Botella"><div class="box"></div>Botella</label>
+            <label class="check-item"><input type="checkbox" value="Llavero Lanyard"><div class="box"></div>Llavero Lanyard</label>
+            <label class="check-item"><input type="checkbox" value="Llavero Bordado"><div class="box"></div>Llavero Bordado</label>
+            <label class="check-item"><input type="checkbox" value="Lanyarda"><div class="box"></div>Lanyarda</label>
+            <label class="check-item"><input type="checkbox" value="Pulsera Sublimada"><div class="box"></div>Pulsera Sublimada</label>
+            <label class="check-item"><input type="checkbox" value="Pulsera Bordada"><div class="box"></div>Pulsera Bordada</label>
+            <label class="check-item"><input type="checkbox" value="Etiquetas Subli"><div class="box"></div>Etiquetas Subli</label>
+            <label class="check-item"><input type="checkbox" value="Etiquetas Impresas"><div class="box"></div>Etiquetas Impresas</label>
+            <label class="check-item"><input type="checkbox" value="Boli"><div class="box"></div>Boli</label>
+            <label class="check-item"><input type="checkbox" value="Bolsa Tela"><div class="box"></div>Bolsa Tela</label>
+            <label class="check-item"><input type="checkbox" value="Bolsa TNT"><div class="box"></div>Bolsa TNT</label>
+            <label class="check-item"><input type="checkbox" value="Pañuelo"><div class="box"></div>Pañuelo</label>
+            <label class="check-item"><input type="checkbox" value="Chapa"><div class="box"></div>Chapa</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- BEBÉ -->
+      <div class="producto-cat" style="margin-bottom:8px;">
+        <button type="button" class="producto-cat-btn" onclick="toggleProductoCat('cat-bebe', this)" style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:9px 14px;background:var(--blue);color:white;border:none;border-radius:6px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1.5px;">
+          <span>🍼 BEBÉ</span>
+          <span class="cat-arrow" style="font-size:12px;transition:transform 0.2s;">▼</span>
+        </button>
+        <div id="cat-bebe" class="producto-cat-panel" style="display:none;padding:10px 4px 4px;animation:fadeIn 0.2s ease;">
+          <div class="check-group">
+            <label class="check-item"><input type="checkbox" value="Peluche Grande"><div class="box"></div>Peluche Grande</label>
+            <label class="check-item"><input type="checkbox" value="Peluche Pequeño"><div class="box"></div>Peluche Pequeño</label>
+            <label class="check-item"><input type="checkbox" value="Manta"><div class="box"></div>Manta</label>
+            <label class="check-item"><input type="checkbox" value="Doudou"><div class="box"></div>Doudou</label>
+            <label class="check-item"><input type="checkbox" value="Capa de Baño"><div class="box"></div>Capa de Baño</label>
+            <label class="check-item"><input type="checkbox" value="Toquilla"><div class="box"></div>Toquilla</label>
+            <label class="check-item"><input type="checkbox" value="Cojín"><div class="box"></div>Cojín</label>
+          </div>
+        </div>
+      </div>
+
     </div>
+
+    <script>
+      function toggleProductoCat(panelId, btn) {
+        const panel = document.getElementById(panelId);
+        const arrow = btn.querySelector('.cat-arrow');
+        const isOpen = panel.style.display !== 'none';
+        panel.style.display = isOpen ? 'none' : 'block';
+        arrow.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+      }
+    </script>
 
     <div class="section-title">SERVICIO</div>
     <div class="check-group" id="servicios">
@@ -3826,6 +3896,17 @@ Reglas:
       const val = item.querySelector('input').value;
       item.classList.toggle('checked', (o.productos || []).includes(val));
     });
+    // Abrir categorías que tengan productos seleccionados
+    ['e-cat-ropa','e-cat-merch','e-cat-bebe'].forEach(catId => {
+      const panel = document.getElementById(catId);
+      if (!panel) return;
+      const hasChecked = panel.querySelector('.check-item.checked');
+      if (hasChecked) {
+        panel.style.display = 'block';
+        const btn = panel.previousElementSibling;
+        if (btn) { const arrow = btn.querySelector('.cat-arrow'); if (arrow) arrow.style.transform = 'rotate(180deg)'; }
+      }
+    });
     // checkboxes servicios
     document.querySelectorAll('#e-servicios .check-item').forEach(item => {
       const val = item.querySelector('input').value;
@@ -4950,18 +5031,68 @@ _Los plazos de entrega están sujetos a posibles variaciones por causas externas
       </div>
 
       <div style="background:var(--blue);color:white;font-family:Bebas Neue,sans-serif;font-size:14px;letter-spacing:1.5px;padding:6px 12px;border-radius:4px;margin:16px 0 10px;">PRODUCTO</div>
-      <div class="check-group" id="e-productos" onclick="toggleCheckEdit(event)">
-        <label class="check-item"><input type="checkbox" value="Camiseta"><div class="box"></div>Camiseta</label>
-        <label class="check-item"><input type="checkbox" value="Camisa"><div class="box"></div>Camisa</label>
-        <label class="check-item"><input type="checkbox" value="Hoodie"><div class="box"></div>Hoodie</label>
-        <label class="check-item"><input type="checkbox" value="Sudadera"><div class="box"></div>Sudadera</label>
-        <label class="check-item"><input type="checkbox" value="Polo"><div class="box"></div>Polo</label>
-        <label class="check-item"><input type="checkbox" value="Pantalón"><div class="box"></div>Pantalón</label>
-        <label class="check-item"><input type="checkbox" value="Abrigo"><div class="box"></div>Abrigo</label>
-        <label class="check-item"><input type="checkbox" value="Polar"><div class="box"></div>Polar</label>
-        <label class="check-item"><input type="checkbox" value="Chaleco"><div class="box"></div>Chaleco</label>
-        <label class="check-item"><input type="checkbox" value="Bata"><div class="box"></div>Bata</label>
-        <label class="check-item"><input type="checkbox" value="Otros"><div class="box"></div>Otros</label>
+      <div id="e-productos" onclick="toggleCheckEdit(event)">
+
+        <!-- ROPA -->
+        <div class="producto-cat" style="margin-bottom:8px;">
+          <button type="button" class="producto-cat-btn" onclick="toggleProductoCat('e-cat-ropa', this);event.stopPropagation();" style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:9px 14px;background:var(--blue);color:white;border:none;border-radius:6px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1.5px;">
+            <span>👕 ROPA</span><span class="cat-arrow" style="font-size:12px;transition:transform 0.2s;">▼</span>
+          </button>
+          <div id="e-cat-ropa" class="producto-cat-panel check-group" style="display:none;padding:10px 4px 4px;">
+            <label class="check-item"><input type="checkbox" value="Camiseta"><div class="box"></div>Camiseta</label>
+            <label class="check-item"><input type="checkbox" value="Camisa"><div class="box"></div>Camisa</label>
+            <label class="check-item"><input type="checkbox" value="Hoodie"><div class="box"></div>Hoodie</label>
+            <label class="check-item"><input type="checkbox" value="Sudadera"><div class="box"></div>Sudadera</label>
+            <label class="check-item"><input type="checkbox" value="Polo"><div class="box"></div>Polo</label>
+            <label class="check-item"><input type="checkbox" value="Bolsillo"><div class="box"></div>Bolsillo</label>
+            <label class="check-item"><input type="checkbox" value="Pantalón"><div class="box"></div>Pantalón</label>
+            <label class="check-item"><input type="checkbox" value="Abrigo"><div class="box"></div>Abrigo</label>
+            <label class="check-item"><input type="checkbox" value="Polar"><div class="box"></div>Polar</label>
+            <label class="check-item"><input type="checkbox" value="Chaleco"><div class="box"></div>Chaleco</label>
+            <label class="check-item"><input type="checkbox" value="Bata"><div class="box"></div>Bata</label>
+            <label class="check-item"><input type="checkbox" value="Otros"><div class="box"></div>Otros</label>
+          </div>
+        </div>
+
+        <!-- MERCHANDISING -->
+        <div class="producto-cat" style="margin-bottom:8px;">
+          <button type="button" class="producto-cat-btn" onclick="toggleProductoCat('e-cat-merch', this);event.stopPropagation();" style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:9px 14px;background:var(--blue);color:white;border:none;border-radius:6px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1.5px;">
+            <span>🛍️ MERCHANDISING</span><span class="cat-arrow" style="font-size:12px;transition:transform 0.2s;">▼</span>
+          </button>
+          <div id="e-cat-merch" class="producto-cat-panel check-group" style="display:none;padding:10px 4px 4px;">
+            <label class="check-item"><input type="checkbox" value="Taza"><div class="box"></div>Taza</label>
+            <label class="check-item"><input type="checkbox" value="Botella"><div class="box"></div>Botella</label>
+            <label class="check-item"><input type="checkbox" value="Llavero Lanyard"><div class="box"></div>Llavero Lanyard</label>
+            <label class="check-item"><input type="checkbox" value="Llavero Bordado"><div class="box"></div>Llavero Bordado</label>
+            <label class="check-item"><input type="checkbox" value="Lanyarda"><div class="box"></div>Lanyarda</label>
+            <label class="check-item"><input type="checkbox" value="Pulsera Sublimada"><div class="box"></div>Pulsera Sublimada</label>
+            <label class="check-item"><input type="checkbox" value="Pulsera Bordada"><div class="box"></div>Pulsera Bordada</label>
+            <label class="check-item"><input type="checkbox" value="Etiquetas Subli"><div class="box"></div>Etiquetas Subli</label>
+            <label class="check-item"><input type="checkbox" value="Etiquetas Impresas"><div class="box"></div>Etiquetas Impresas</label>
+            <label class="check-item"><input type="checkbox" value="Boli"><div class="box"></div>Boli</label>
+            <label class="check-item"><input type="checkbox" value="Bolsa Tela"><div class="box"></div>Bolsa Tela</label>
+            <label class="check-item"><input type="checkbox" value="Bolsa TNT"><div class="box"></div>Bolsa TNT</label>
+            <label class="check-item"><input type="checkbox" value="Pañuelo"><div class="box"></div>Pañuelo</label>
+            <label class="check-item"><input type="checkbox" value="Chapa"><div class="box"></div>Chapa</label>
+          </div>
+        </div>
+
+        <!-- BEBÉ -->
+        <div class="producto-cat" style="margin-bottom:8px;">
+          <button type="button" class="producto-cat-btn" onclick="toggleProductoCat('e-cat-bebe', this);event.stopPropagation();" style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:9px 14px;background:var(--blue);color:white;border:none;border-radius:6px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1.5px;">
+            <span>🍼 BEBÉ</span><span class="cat-arrow" style="font-size:12px;transition:transform 0.2s;">▼</span>
+          </button>
+          <div id="e-cat-bebe" class="producto-cat-panel check-group" style="display:none;padding:10px 4px 4px;">
+            <label class="check-item"><input type="checkbox" value="Peluche Grande"><div class="box"></div>Peluche Grande</label>
+            <label class="check-item"><input type="checkbox" value="Peluche Pequeño"><div class="box"></div>Peluche Pequeño</label>
+            <label class="check-item"><input type="checkbox" value="Manta"><div class="box"></div>Manta</label>
+            <label class="check-item"><input type="checkbox" value="Doudou"><div class="box"></div>Doudou</label>
+            <label class="check-item"><input type="checkbox" value="Capa de Baño"><div class="box"></div>Capa de Baño</label>
+            <label class="check-item"><input type="checkbox" value="Toquilla"><div class="box"></div>Toquilla</label>
+            <label class="check-item"><input type="checkbox" value="Cojín"><div class="box"></div>Cojín</label>
+          </div>
+        </div>
+
       </div>
 
       <div style="background:var(--blue);color:white;font-family:Bebas Neue,sans-serif;font-size:14px;letter-spacing:1.5px;padding:6px 12px;border-radius:4px;margin:16px 0 10px;">SERVICIO</div>
