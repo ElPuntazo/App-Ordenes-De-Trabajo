@@ -1205,10 +1205,10 @@
 
       <!-- ROPA -->
       <div class="producto-cat" style="margin-bottom:8px;">
-        <div style="width:100%;display:flex;align-items:center;padding:9px 14px;background:var(--blue);color:white;border-radius:6px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1.5px;">
-          <span>👕 ROPA</span>
+        <div class="prod-cat-header" onclick="toggleProdCat('cat-ropa',this)">
+          <span>👕 ROPA</span><span class="prod-cat-arrow">▼</span>
         </div>
-        <div id="cat-ropa" class="producto-cat-panel" style="padding:10px 4px 4px;">
+        <div id="cat-ropa" class="producto-cat-panel">
           <div class="check-group prod-check-group" id="prod-grp-ropa">
             <label class="check-item prod-check-item" onclick="toggleProdItem(this,event)"><input type="checkbox" value="Camiseta"><div class="box"></div>Camiseta</label>
             <label class="check-item prod-check-item" onclick="toggleProdItem(this,event)"><input type="checkbox" value="Camisa"><div class="box"></div>Camisa</label>
@@ -1229,10 +1229,10 @@
 
       <!-- MERCHANDISING -->
       <div class="producto-cat" style="margin-bottom:8px;">
-        <div style="width:100%;display:flex;align-items:center;padding:9px 14px;background:var(--blue);color:white;border-radius:6px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1.5px;">
-          <span>🛍️ MERCHANDISING</span>
+        <div class="prod-cat-header" onclick="toggleProdCat('cat-merch',this)">
+          <span>🛍️ MERCHANDISING</span><span class="prod-cat-arrow">▼</span>
         </div>
-        <div id="cat-merch" class="producto-cat-panel" style="padding:10px 4px 4px;">
+        <div id="cat-merch" class="producto-cat-panel">
           <div class="check-group prod-check-group" id="prod-grp-merch">
             <label class="check-item prod-check-item" onclick="toggleProdItem(this,event)"><input type="checkbox" value="Taza"><div class="box"></div>Taza</label>
             <label class="check-item prod-check-item" onclick="toggleProdItem(this,event)"><input type="checkbox" value="Botella"><div class="box"></div>Botella</label>
@@ -1255,10 +1255,10 @@
 
       <!-- BEBÉ -->
       <div class="producto-cat" style="margin-bottom:8px;">
-        <div style="width:100%;display:flex;align-items:center;padding:9px 14px;background:var(--blue);color:white;border-radius:6px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1.5px;">
-          <span>🍼 BEBÉ</span>
+        <div class="prod-cat-header" onclick="toggleProdCat('cat-bebe',this)">
+          <span>🍼 BEBÉ</span><span class="prod-cat-arrow">▼</span>
         </div>
-        <div id="cat-bebe" class="producto-cat-panel" style="padding:10px 4px 4px;">
+        <div id="cat-bebe" class="producto-cat-panel">
           <div class="check-group prod-check-group" id="prod-grp-bebe">
             <label class="check-item prod-check-item" onclick="toggleProdItem(this,event)"><input type="checkbox" value="Peluche Grande"><div class="box"></div>Peluche Grande</label>
             <label class="check-item prod-check-item" onclick="toggleProdItem(this,event)"><input type="checkbox" value="Peluche Pequeño"><div class="box"></div>Peluche Pequeño</label>
@@ -1307,9 +1307,70 @@
       .prod-desc-row textarea:focus { border-color: var(--blue); outline: none; }
       body.dark-mode .prod-desc-row textarea { background: #1a1d2e; color: #e8eaf6; border-color: #2e3246; }
       body.dark-mode .prod-desc-row .prod-desc-label { color: #7ba3f5; }
+
+      /* Acordeón categorías producto */
+      .prod-cat-header {
+        width:100%; display:flex; align-items:center; justify-content:space-between;
+        padding:9px 14px; background:var(--blue); color:white;
+        border-radius:6px; font-family:'Bebas Neue',sans-serif; font-size:15px;
+        letter-spacing:1.5px; cursor:pointer; user-select:none;
+        transition: background 0.15s;
+      }
+      .prod-cat-header:hover { background: #2a4fba; }
+      .prod-cat-arrow {
+        font-size:11px; transition: transform 0.2s; display:inline-block;
+      }
+      .prod-cat-header.open .prod-cat-arrow { transform: rotate(180deg); }
+      .producto-cat-panel {
+        overflow: hidden;
+        max-height: 0;
+        transition: max-height 0.25s ease, padding 0.2s ease;
+        padding: 0 4px !important;
+      }
+      .producto-cat-panel.open {
+        max-height: 600px;
+        padding: 10px 4px 4px !important;
+      }
+      /* Botón X en cada prod-check-item seleccionado */
+      .prod-check-item.checked .prod-remove-btn {
+        display: inline-flex;
+      }
+      .prod-remove-btn {
+        display: none;
+        align-items: center;
+        justify-content: center;
+        margin-left: 4px;
+        width: 14px;
+        height: 14px;
+        font-size: 10px;
+        line-height: 1;
+        color: white;
+        background: #e03535;
+        border-radius: 50%;
+        cursor: pointer;
+        flex-shrink: 0;
+      }
     </style>
 
     <script>
+      /* Acordeón secciones producto */
+      function toggleProdCat(panelId, headerEl) {
+        const panel = document.getElementById(panelId);
+        if (!panel) return;
+        const isOpen = panel.classList.contains('open');
+        panel.classList.toggle('open', !isOpen);
+        headerEl.classList.toggle('open', !isOpen);
+      }
+      /* Abre el acordeón de la categoría padre cuando se selecciona un item */
+      function _ensureProdCatOpen(labelEl) {
+        const panel = labelEl.closest('.producto-cat-panel');
+        if (panel && !panel.classList.contains('open')) {
+          panel.classList.add('open');
+          const header = panel.previousElementSibling;
+          if (header) header.classList.add('open');
+        }
+      }
+
       /* Map item value → which desc area (grp id → desc div id) */
       const _prodDescMap = {
         'prod-grp-ropa':  'prod-desc-ropa',
@@ -1323,12 +1384,15 @@
       }
       function toggleProdItem(labelEl, e) {
         e.preventDefault();
-        labelEl.classList.toggle('checked');
+        const wasChecked = labelEl.classList.contains('checked');
+        labelEl.classList.toggle('checked', !wasChecked);
+        const cb = labelEl.querySelector('input[type=checkbox]');
+        if (cb) cb.checked = !wasChecked;
         const val = labelEl.querySelector('input').value;
         const descArea = _prodDescAreaForItem(labelEl);
         if (!descArea) return;
-        if (labelEl.classList.contains('checked')) {
-          // Añadir textarea si no existe
+        if (!wasChecked) {
+          // Seleccionar: añadir textarea
           if (!descArea.querySelector(`[data-prod="${CSS.escape(val)}"]`)) {
             const row = document.createElement('div');
             row.className = 'prod-desc-row';
@@ -1338,7 +1402,7 @@
             row.querySelector('textarea').focus();
           }
         } else {
-          // Quitar textarea
+          // Deseleccionar: quitar textarea
           const row = descArea.querySelector(`[data-prod="${CSS.escape(val)}"]`);
           if (row) row.remove();
         }
@@ -1367,6 +1431,15 @@
           row.innerHTML = `<span class="prod-desc-label">${val}</span><textarea placeholder="Descripción de ${val}..." rows="2" data-prod-desc="${val}">${descs[val]}</textarea>`;
           area.appendChild(row);
         });
+        // Abrir acordeón si hay items
+        if (checked.length > 0) {
+          const panel = area.closest('.producto-cat-panel');
+          if (panel) {
+            panel.classList.add('open');
+            const header = panel.previousElementSibling;
+            if (header) header.classList.add('open');
+          }
+        }
       }
     </script>
 
@@ -4044,13 +4117,16 @@ Reglas:
   function toggleProdItemEdit(labelEl, e) {
     e.preventDefault();
     e.stopPropagation();
-    labelEl.classList.toggle('checked');
+    const wasChecked = labelEl.classList.contains('checked');
+    labelEl.classList.toggle('checked', !wasChecked);
+    const cb = labelEl.querySelector('input[type=checkbox]');
+    if (cb) cb.checked = !wasChecked;
     const val = labelEl.querySelector('input').value;
     const grp = labelEl.closest('.prod-check-group');
     if (!grp) return;
     const descArea = document.getElementById(_editProdDescMap[grp.id]);
     if (!descArea) return;
-    if (labelEl.classList.contains('checked')) {
+    if (!wasChecked) {
       if (!descArea.querySelector(`[data-prod="${CSS.escape(val)}"]`)) {
         const row = document.createElement('div');
         row.className = 'prod-desc-row';
@@ -5167,10 +5243,10 @@ _Los plazos de entrega están sujetos a posibles variaciones por causas externas
 
         <!-- ROPA -->
         <div class="producto-cat" style="margin-bottom:8px;">
-          <div style="width:100%;display:flex;align-items:center;padding:9px 14px;background:var(--blue);color:white;border-radius:6px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1.5px;">
-            <span>👕 ROPA</span>
+          <div class="prod-cat-header" onclick="toggleProdCat('e-cat-ropa',this)">
+            <span>👕 ROPA</span><span class="prod-cat-arrow">▼</span>
           </div>
-          <div id="e-cat-ropa" class="producto-cat-panel" style="padding:10px 4px 4px;">
+          <div id="e-cat-ropa" class="producto-cat-panel">
             <div class="check-group prod-check-group" id="e-prod-grp-ropa">
               <label class="check-item prod-check-item" onclick="toggleProdItemEdit(this,event)"><input type="checkbox" value="Camiseta"><div class="box"></div>Camiseta</label>
               <label class="check-item prod-check-item" onclick="toggleProdItemEdit(this,event)"><input type="checkbox" value="Camisa"><div class="box"></div>Camisa</label>
@@ -5191,10 +5267,10 @@ _Los plazos de entrega están sujetos a posibles variaciones por causas externas
 
         <!-- MERCHANDISING -->
         <div class="producto-cat" style="margin-bottom:8px;">
-          <div style="width:100%;display:flex;align-items:center;padding:9px 14px;background:var(--blue);color:white;border-radius:6px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1.5px;">
-            <span>🛍️ MERCHANDISING</span>
+          <div class="prod-cat-header" onclick="toggleProdCat('e-cat-merch',this)">
+            <span>🛍️ MERCHANDISING</span><span class="prod-cat-arrow">▼</span>
           </div>
-          <div id="e-cat-merch" class="producto-cat-panel" style="padding:10px 4px 4px;">
+          <div id="e-cat-merch" class="producto-cat-panel">
             <div class="check-group prod-check-group" id="e-prod-grp-merch">
               <label class="check-item prod-check-item" onclick="toggleProdItemEdit(this,event)"><input type="checkbox" value="Taza"><div class="box"></div>Taza</label>
               <label class="check-item prod-check-item" onclick="toggleProdItemEdit(this,event)"><input type="checkbox" value="Botella"><div class="box"></div>Botella</label>
@@ -5217,10 +5293,10 @@ _Los plazos de entrega están sujetos a posibles variaciones por causas externas
 
         <!-- BEBÉ -->
         <div class="producto-cat" style="margin-bottom:8px;">
-          <div style="width:100%;display:flex;align-items:center;padding:9px 14px;background:var(--blue);color:white;border-radius:6px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1.5px;">
-            <span>🍼 BEBÉ</span>
+          <div class="prod-cat-header" onclick="toggleProdCat('e-cat-bebe',this)">
+            <span>🍼 BEBÉ</span><span class="prod-cat-arrow">▼</span>
           </div>
-          <div id="e-cat-bebe" class="producto-cat-panel" style="padding:10px 4px 4px;">
+          <div id="e-cat-bebe" class="producto-cat-panel">
             <div class="check-group prod-check-group" id="e-prod-grp-bebe">
               <label class="check-item prod-check-item" onclick="toggleProdItemEdit(this,event)"><input type="checkbox" value="Peluche Grande"><div class="box"></div>Peluche Grande</label>
               <label class="check-item prod-check-item" onclick="toggleProdItemEdit(this,event)"><input type="checkbox" value="Peluche Pequeño"><div class="box"></div>Peluche Pequeño</label>
