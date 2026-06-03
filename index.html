@@ -1349,40 +1349,46 @@
         'e-prod-grp-merch': 'e-prod-desc-merch',
         'e-prod-grp-bebe':  'e-prod-desc-bebe',
       };
-      function prodItemClick(el) {
-        const grp = el.closest('.prod-check-group');
-        if (!grp) return;
-        const descArea = document.getElementById(_descMapAll[grp.id] || '');
-        const val = el.querySelector('input').value;
-        if (el.classList.contains('checked')) {
-          /* QUITAR */
-          el.classList.remove('checked');
-          if (descArea) {
-            const row = descArea.querySelector('[data-prod="' + CSS.escape(val) + '"]');
-            if (row) row.remove();
-          }
-        } else {
-          /* AÑADIR */
-          el.classList.add('checked');
-          if (descArea && !descArea.querySelector('[data-prod="' + CSS.escape(val) + '"]')) {
-            const row = document.createElement('div');
-            row.className = 'prod-desc-row';
-            row.dataset.prod = val;
-            row.innerHTML = '<span class="prod-desc-label">' + val + '</span><textarea placeholder="Descripción de ' + val + '..." rows="2" data-prod-desc="' + val + '"></textarea>';
-            descArea.appendChild(row);
-            row.querySelector('textarea').focus();
-          }
-        }
-      }
-      /* Registrar listeners con pointerdown — un solo disparo en táctil y ratón */
+      /* Un solo handler por elemento usando dataset como flag de procesado */
       document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.prod-check-item').forEach(function(el) {
-          el.addEventListener('pointerdown', function(e) {
+          el.addEventListener('click', function(e) {
             e.stopPropagation();
-            prodItemClick(el);
+            /* Si ya está procesando este click, ignorar */
+            if (el.dataset.processing) return;
+            el.dataset.processing = '1';
+            requestAnimationFrame(function() { delete el.dataset.processing; });
+
+            const grp = el.closest('.prod-check-group');
+            if (!grp) return;
+            const descArea = document.getElementById(_descMapAll[grp.id] || '');
+            const val = el.querySelector('input').value;
+
+            if (el.classList.contains('checked')) {
+              /* DESELECCIONAR */
+              el.classList.remove('checked');
+              if (descArea) {
+                const row = descArea.querySelector('[data-prod="' + CSS.escape(val) + '"]');
+                if (row) row.remove();
+              }
+            } else {
+              /* SELECCIONAR */
+              el.classList.add('checked');
+              if (descArea && !descArea.querySelector('[data-prod="' + CSS.escape(val) + '"]')) {
+                const row = document.createElement('div');
+                row.className = 'prod-desc-row';
+                row.dataset.prod = val;
+                row.innerHTML = '<span class="prod-desc-label">' + val + '</span><textarea placeholder="Descripción de ' + val + '..." rows="2" data-prod-desc="' + val + '"></textarea>';
+                descArea.appendChild(row);
+              }
+            }
           });
         });
       });
+      /* Función pública usada por setProdDescs y otros — no borra el área */
+      function prodItemClick(el) {
+        el.dispatchEvent(new MouseEvent('click', { bubbles: false }));
+      }
       /* Lee las descripciones del formulario principal */
       function getProdDescs(containerId) {
         const out = {};
