@@ -1365,18 +1365,15 @@
           }
         }
       }
-      /* Delegación de eventos en los grupos de producto (formulario principal) */
-      document.addEventListener('DOMContentLoaded', function() {
-        document.querySelectorAll('.prod-check-group').forEach(function(grp) {
-          grp.addEventListener('click', function(e) {
-            const label = e.target.closest('.prod-check-item');
-            if (!label) return;
-            e.preventDefault();
-            e.stopPropagation();
-            const descArea = _prodDescAreaForItem(label);
-            _applyProdToggle(label, descArea);
-          });
-        });
+      /* Delegación de eventos — directamente en document para no depender de DOMContentLoaded */
+      document.addEventListener('click', function(e) {
+        const label = e.target.closest('.prod-check-item');
+        if (!label) return;
+        if (!label.closest('.prod-check-group')) return;
+        e.preventDefault();
+        e.stopPropagation();
+        const descArea = _prodDescAreaForItem(label);
+        _applyProdToggle(label, descArea);
       });
       /* Lee las descripciones del formulario principal */
       function getProdDescs(containerId) {
@@ -5060,7 +5057,7 @@ Reglas:
 
   function handleDrop(e) {
     e.preventDefault();
-    document.getElementById('foto-upload-area').style.borderColor = 'var(--gray-line)';
+    // foto-upload-area removed - border reset handled inline
     handleFotos(e.dataTransfer.files);
   }
 
