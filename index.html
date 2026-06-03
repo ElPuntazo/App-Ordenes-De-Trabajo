@@ -1468,6 +1468,7 @@
       <button class="mockup-tab" onclick="switchPrenda('hoodie',this)">Hoodie</button>
       <button class="mockup-tab" onclick="switchPrenda('polo',this)">Polo</button>
       <button class="mockup-tab" onclick="switchPrenda('bolsillo',this)">Bolsillo</button>
+      <button class="mockup-tab" onclick="switchPrenda('pantalon',this)">Pantalón</button>
     </div>
 
     <!-- Contenedor SVG mockups -->
@@ -1767,6 +1768,67 @@
         </svg>
         <textarea id="obs-polo" class="obs-prenda" data-prenda="polo" placeholder="Observaciones para Polo..." style="width:100%;margin-top:10px;padding:8px 10px;border:1.5px solid var(--gray-line);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:12px;resize:vertical;color:var(--text-main);background:#fff;box-sizing:border-box;" rows="2"></textarea>
         <div class="prenda-fotos-wrap" data-prenda="polo" style="margin-top:8px;">
+          <div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px;">📸 Fotos</div>
+          <div style="display:flex;gap:8px;margin-bottom:6px;">
+            <button type="button" onclick="miniFotoClick(this,'camara')" style="flex:1;padding:7px 4px;border:1.5px dashed #e5740a;background:#fff8f5;color:#e5740a;border-radius:8px;cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif;">📷 Cámara</button>
+            <button type="button" onclick="miniFotoClick(this,'galeria')" style="flex:1;padding:7px 4px;border:1.5px dashed var(--blue);background:#f0faff;color:var(--blue);border-radius:8px;cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif;">🖼️ Galería</button>
+          </div>
+          <input type="file" class="mini-foto-input-camara" accept="image/*" capture="environment" style="display:none" onchange="miniFotoHandle(this)">
+          <input type="file" class="mini-foto-input-galeria" multiple accept="image/*" style="display:none" onchange="miniFotoHandle(this)">
+          <div class="mini-foto-preview" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+        </div>
+      </div>
+
+      <!-- ═══ PANTALÓN ═══ -->
+      <div id="mockup-pantalon" class="mockup-prendas" style="display:none">
+        <div style="text-align:center;font-size:11px;color:var(--text-soft);margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:1px;">PANTALÓN — Pulsa una zona para seleccionarla</div>
+        <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;align-items:flex-start;">
+        <div style="flex:1 1 200px;min-width:170px;max-width:260px;background:#fff;border:1.5px solid var(--gray-line);border-radius:10px;padding:10px;">
+          <div style="text-align:center;font-size:11px;color:var(--text-soft);margin-bottom:6px;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Frente</div>
+          <svg viewBox="0 0 200 360" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;margin:0 auto;" id="svg-pantalon">
+          <path d="M45,28 L155,28 L150,150 L142,345 L110,345 L100,170 L90,345 L58,345 L50,150 Z" fill="#eef0f6" stroke="#1a3a8f" stroke-width="1.4"/>
+          <rect x="45" y="15" width="110" height="15" rx="2" fill="#e0e3ee" stroke="#1a3a8f" stroke-width="1.2"/>
+          <line x1="100" y1="30" x2="100" y2="168" stroke="#1a3a8f" stroke-width="0.7" opacity="0.5"/>
+            <rect class="zona" id="z-PFMI" data-val="Pantalón Frente Bolsillo Delantero Izq" x="52" y="55" width="36" height="34" rx="3" fill="rgba(240,242,248,0.15)" stroke="#1a3a8f" stroke-width="2" onclick="toggleZona(this)"/>
+            <text class="zona-label" x="70" y="76" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="13" font-weight="bold" id="lbl-PFMI" fill="#1a3a8f">BI</text>
+            <rect class="zona" id="z-PFMD" data-val="Pantalón Frente Bolsillo Delantero Der" x="112" y="55" width="36" height="34" rx="3" fill="rgba(240,242,248,0.15)" stroke="#1a3a8f" stroke-width="2" onclick="toggleZona(this)"/>
+            <text class="zona-label" x="130" y="76" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="13" font-weight="bold" id="lbl-PFMD" fill="#1a3a8f">BD</text>
+            <rect class="zona" id="z-PFBCI" data-val="Pantalón Frente Cargo Izquierdo" x="46" y="160" width="42" height="58" rx="3" fill="rgba(240,242,248,0.15)" stroke="#1a3a8f" stroke-width="2" onclick="toggleZona(this)"/>
+            <text class="zona-label" x="67" y="193" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="13" font-weight="bold" id="lbl-PFBCI" fill="#1a3a8f">CI</text>
+            <rect class="zona" id="z-PFBCD" data-val="Pantalón Frente Cargo Derecho" x="112" y="160" width="42" height="58" rx="3" fill="rgba(240,242,248,0.15)" stroke="#1a3a8f" stroke-width="2" onclick="toggleZona(this)"/>
+            <text class="zona-label" x="133" y="193" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="13" font-weight="bold" id="lbl-PFBCD" fill="#1a3a8f">CD</text>
+          </svg>
+        </div>
+        <div style="flex:1 1 200px;min-width:170px;max-width:260px;background:#fff;border:1.5px solid var(--gray-line);border-radius:10px;padding:10px;">
+          <div style="text-align:center;font-size:11px;color:var(--text-soft);margin-bottom:6px;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Trasera</div>
+          <svg viewBox="0 0 200 360" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;margin:0 auto;" id="svg-pantalon-trasera">
+          <path d="M45,28 L155,28 L150,150 L142,345 L110,345 L100,170 L90,345 L58,345 L50,150 Z" fill="#eef0f6" stroke="#1a3a8f" stroke-width="1.4"/>
+          <rect x="45" y="15" width="110" height="15" rx="2" fill="#e0e3ee" stroke="#1a3a8f" stroke-width="1.2"/>
+          <line x1="100" y1="30" x2="100" y2="168" stroke="#1a3a8f" stroke-width="0.7" opacity="0.5"/>
+            <rect class="zona" id="z-PTBI" data-val="Pantalón Trasera Bolsillo Izquierdo" x="54" y="55" width="40" height="36" rx="3" fill="rgba(240,242,248,0.15)" stroke="#1a3a8f" stroke-width="2" onclick="toggleZona(this)"/>
+            <text class="zona-label" x="74" y="77" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="13" font-weight="bold" id="lbl-PTBI" fill="#1a3a8f">BI</text>
+            <rect class="zona" id="z-PTBD" data-val="Pantalón Trasera Bolsillo Derecho" x="106" y="55" width="40" height="36" rx="3" fill="rgba(240,242,248,0.15)" stroke="#1a3a8f" stroke-width="2" onclick="toggleZona(this)"/>
+            <text class="zona-label" x="126" y="77" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="13" font-weight="bold" id="lbl-PTBD" fill="#1a3a8f">BD</text>
+            <rect class="zona" id="z-PTCI" data-val="Pantalón Trasera Cargo Izquierdo" x="46" y="165" width="42" height="52" rx="3" fill="rgba(240,242,248,0.15)" stroke="#1a3a8f" stroke-width="2" onclick="toggleZona(this)"/>
+            <text class="zona-label" x="67" y="195" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="13" font-weight="bold" id="lbl-PTCI" fill="#1a3a8f">CI</text>
+            <rect class="zona" id="z-PTCD" data-val="Pantalón Trasera Cargo Derecho" x="112" y="165" width="42" height="52" rx="3" fill="rgba(240,242,248,0.15)" stroke="#1a3a8f" stroke-width="2" onclick="toggleZona(this)"/>
+            <text class="zona-label" x="133" y="195" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="13" font-weight="bold" id="lbl-PTCD" fill="#1a3a8f">CD</text>
+          </svg>
+        </div>
+        <div style="flex:1 1 200px;min-width:170px;max-width:260px;background:#fff;border:1.5px solid var(--gray-line);border-radius:10px;padding:10px;">
+          <div style="text-align:center;font-size:11px;color:var(--text-soft);margin-bottom:6px;font-weight:700;text-transform:uppercase;letter-spacing:1px;">De Lateral</div>
+          <svg viewBox="0 0 140 360" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;margin:0 auto;" id="svg-pantalon-lateral">
+          <path d="M42,28 L98,28 L94,150 L86,345 L60,345 L50,150 L46,30 Z" fill="#eef0f6" stroke="#1a3a8f" stroke-width="1.4"/>
+          <rect x="42" y="15" width="56" height="15" rx="2" fill="#e0e3ee" stroke="#1a3a8f" stroke-width="1.2"/>
+            <rect class="zona" id="z-PLC" data-val="Pantalón Lateral Cargo" x="50" y="160" width="40" height="58" rx="3" fill="rgba(240,242,248,0.15)" stroke="#1a3a8f" stroke-width="2" onclick="toggleZona(this)"/>
+            <text class="zona-label" x="70" y="193" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="13" font-weight="bold" id="lbl-PLC" fill="#1a3a8f">C</text>
+            <rect class="zona" id="z-PLI" data-val="Pantalón Lateral Inferior" x="52" y="250" width="36" height="46" rx="3" fill="rgba(240,242,248,0.15)" stroke="#1a3a8f" stroke-width="2" onclick="toggleZona(this)"/>
+            <text class="zona-label" x="70" y="277" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="13" font-weight="bold" id="lbl-PLI" fill="#1a3a8f">I</text>
+          </svg>
+        </div>
+        </div>
+        <textarea id="obs-pantalon" class="obs-prenda" data-prenda="pantalon" placeholder="Observaciones para Pantalón..." style="width:100%;margin-top:10px;padding:8px 10px;border:1.5px solid var(--gray-line);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:12px;resize:vertical;color:var(--text-main);background:#fff;box-sizing:border-box;" rows="2"></textarea>
+        <div class="prenda-fotos-wrap" data-prenda="pantalon" style="margin-top:8px;">
           <div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px;">📸 Fotos</div>
           <div style="display:flex;gap:8px;margin-bottom:6px;">
             <button type="button" onclick="miniFotoClick(this,'camara')" style="flex:1;padding:7px 4px;border:1.5px dashed #e5740a;background:#fff8f5;color:#e5740a;border-radius:8px;cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif;">📷 Cámara</button>
@@ -2456,6 +2518,7 @@
       { id: 'hoodie',   label: 'Hoodie'   },
       { id: 'polo',     label: 'Polo'     },
       { id: 'bolsillo', label: 'Bolsillo' },
+      { id: 'pantalon', label: 'Pantalón' },
     ];
     // posiciones marcadas en la lista (por si el usuario no clicó el SVG)
     const _posSeleccionadas = getChecked('posiciones');
