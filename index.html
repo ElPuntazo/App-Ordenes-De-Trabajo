@@ -3053,6 +3053,92 @@
     } catch(e) { return Promise.resolve(null); }
   };
 
+  function buildOrderEmailParams(order, pdfUrl) {
+    const _c = order.cliente || {};
+    const sizeCols = ['XXS','XS','S','M','L','XL','XXL','3XL','4XL','5XL'];
+    const _sizes = (order.sizes || []).filter(r => r.modelo);
+    const tallasTexto = _sizes.length
+      ? _sizes.map(r => {
+          const total = sizeCols.reduce((a,s)=>a+(parseInt(r[s.toLowerCase()]||r[s]||0)||0),0);
+          const detalle = sizeCols.filter(s=>parseInt(r[s.toLowerCase()]||r[s]||0)>0).map(s=>`${s}:${r[s.toLowerCase()]||r[s]}`).join(' | ');
+          return `${r.modelo||''} (${r.color||''}) — ${detalle} — TOTAL: ${total}`;
+        }).join('\n')
+      : '—';
+    const gorrasTexto = (order.gorras||[]).length
+      ? (order.gorras||[]).map(g=>`${g.unidades||''} uds | Modelo: ${g.modelo||''} | Tela: ${g.colorTela||''} | Hilo: ${g.colorHilo||''} | Posición: ${(g.posiciones||[]).join(', ')}`).join('\n')
+      : '—';
+    const parchesTexto = (order.parches||[]).length
+      ? (order.parches||[]).map(p=>`Tipo: ${p.tipo||''} | ${p.unidades||''} uds | ${p.ancho||''}x${p.alto||''}cm | Hilo: ${p.colorHilo||''} | Diseño: ${p.disenomini||''}`).join('\n')
+      : '—';
+    return {
+      name:        'El Puntazo',
+      email:       'info@elpuntazo.es',
+      cliente:     (_c.nombre||'Sin nombre'),
+      telefono:    (_c.telefono||'—'),
+      entrega:     (order.entrega==='recoge'?'Recoge en tienda':'Envío a domicilio'),
+      fecha:       (order.fecha||'—'),
+      vence:       (order.vence||'—'),
+      trabajo:     (order.trabajo||'—'),
+      obs:         (order.obs||'—'),
+      productos:   (order.productos||[]).join(', ') || '—',
+      servicios:   (order.servicios||[]).join(', ') || '—',
+      tallas:      tallasTexto,
+      posiciones:  (order.posiciones||[]).join(', ') || '—',
+      color_diseno:(order.colorDiseno||'—'),
+      obs_estampado: (typeof (order.obsEstampado||'') === 'string' ? (order.obsEstampado||'—') : Object.values(order.obsEstampado||{}).join(', ')||'—'),
+      gorras:      gorrasTexto,
+      parches:     parchesTexto,
+      otros:       (order.otros||'—'),
+      estado:      (order.estado||'Pendiente'),
+      orden_id:    (order.id||''),
+      pdf_url:     (pdfUrl || '—'),
+    };
+  }
+
+  function sendOrderEmail(order, pdfUrl) {
+    return emailjs.send('service_gmenkch', 'template_z2wve1q', buildOrderEmailParams(order, pdfUrl));
+  }
+
+  async function postSaveAutomation(order) {
+    let pdfUrl = null;
+
+    try {
+      showToast('⏳ Generando PDF...');
+      const { blob, filename } = await generarPdfBlobForOrder(order);
+      showToast('⏳ Subiendo PDF a la nube...');
+      pdfUrl = await uploadPdfToFirebase(blob, order.id, filename);
+      if (pdfUrl) {
+        order.pdfUrl = pdfUrl;
+        const idx = orders.findIndex(x => x.id === order.id);
+        if (idx >= 0) orders[idx].pdfUrl = pdfUrl;
+        if (typeof db !== 'undefined') {
+          await db.collection('orders').doc(String(order.id)).update({ pdfUrl });
+        }
+      }
+    } catch (e) {
+      console.warn('PDF automation failed:', e);
+    }
+
+    try {
+      if (trelloConfig.apiKey && trelloConfig.token && order.listId) {
+        showToast('⏳ Enviando a Trello...');
+        await autoSendOrderToTrello(order, pdfUrl);
+        renderOrders();
+      }
+    } catch (e) {
+      console.warn('Trello automation failed:', e);
+    }
+
+    try {
+      if (typeof emailjs !== 'undefined') {
+        showToast('⏳ Enviando email...');
+        await sendOrderEmail(order, pdfUrl);
+      }
+    } catch (e) {
+      console.warn('Email no enviado:', e);
+    }
+  }
+
   async function guardarOrden() {
     // minimo necesitamos el nombre del cliente
     const nombre = document.getElementById('f-nombre').value.trim();
@@ -3159,6 +3245,7 @@
         return res;
       })(),
       trelloSent: false,
+      pdfUrl: null,
       factura: (document.querySelector('input[name="quiere-factura"]:checked')?.value === 'si') ? {
         empresa:   document.getElementById('f-factura-empresa').value,
         cif:       document.getElementById('f-factura-cif').value,
@@ -3175,50 +3262,8 @@
       orders.unshift(order);
       showToast('⏳ Subiendo fotos a la nube…');
       await fbSaveOrder(order);
-      // Enviar email en segundo plano (sin bloquear la app)
-      setTimeout(() => {
-        try {
-          const _c = order.cliente || {};
-          const sizeCols = ['XXS','XS','S','M','L','XL','XXL','3XL','4XL','5XL'];
-          const _sizes = (order.sizes || []).filter(r => r.modelo);
-          const tallasTexto = _sizes.length
-            ? _sizes.map(r => {
-                const total = sizeCols.reduce((a,s)=>a+(parseInt(r[s.toLowerCase()]||r[s]||0)||0),0);
-                const detalle = sizeCols.filter(s=>parseInt(r[s.toLowerCase()]||r[s]||0)>0).map(s=>`${s}:${r[s.toLowerCase()]||r[s]}`).join(' | ');
-                return `${r.modelo||''} (${r.color||''}) — ${detalle} — TOTAL: ${total}`;
-              }).join('\n')
-            : '—';
-          const gorrasTexto = (order.gorras||[]).length
-            ? (order.gorras||[]).map(g=>`${g.unidades||''} uds | Modelo: ${g.modelo||''} | Tela: ${g.colorTela||''} | Hilo: ${g.colorHilo||''} | Posición: ${(g.posiciones||[]).join(', ')}`).join('\n')
-            : '—';
-          const parchesTexto = (order.parches||[]).length
-            ? (order.parches||[]).map(p=>`Tipo: ${p.tipo||''} | ${p.unidades||''} uds | ${p.ancho||''}x${p.alto||''}cm | Hilo: ${p.colorHilo||''} | Diseño: ${p.disenomini||''}`).join('\n')
-            : '—';
-          emailjs.send('service_gmenkch', 'template_z2wve1q', {
-            name:        'El Puntazo',
-            email:       'info@elpuntazo.es',
-            cliente:     (_c.nombre||'Sin nombre'),
-            telefono:    (_c.telefono||'—'),
-            entrega:     (order.entrega==='recoge'?'Recoge en tienda':'Envío a domicilio'),
-            fecha:       (order.fecha||'—'),
-            vence:       (order.vence||'—'),
-            trabajo:     (order.trabajo||'—'),
-            obs:         (order.obs||'—'),
-            productos:   (order.productos||[]).join(', ') || '—',
-            servicios:   (order.servicios||[]).join(', ') || '—',
-            tallas:      tallasTexto,
-            posiciones:  (order.posiciones||[]).join(', ') || '—',
-            color_diseno:(order.colorDiseno||'—'),
-            obs_estampado: (typeof (order.obsEstampado||'') === 'string' ? (order.obsEstampado||'—') : Object.values(order.obsEstampado||{}).join(', ')||'—'),
-            gorras:      gorrasTexto,
-            parches:     parchesTexto,
-            otros:       (order.otros||'—'),
-            estado:      (order.estado||'Pendiente'),
-            orden_id:    (order.id||''),
-          }).catch(e => console.warn('Email no enviado:', e));
-        } catch(emailErr) { console.warn('Email no enviado:', emailErr); }
-      }, 0);
-      showToast('✅ Orden guardada en la nube ☁️');
+      await postSaveAutomation(order);
+      showToast('✅ Orden guardada y enviada ☁️');
       setTimeout(() => {
         limpiarFormulario(true);
         showPanel('orders');
@@ -3511,27 +3556,64 @@
     }
   }
 
-  async function sendToTrello(id) {
-    const cfg = trelloConfig;
-    if (!cfg.apiKey || !cfg.token) {
-      showToast('⚠️ Configura Trello primero', true);
-      openTrelloModal();
-      return;
+  function collectOrderImages(order) {
+    const imagenes = [];
+
+    if (order.mockupSvgs && order.mockupSvgs.length) {
+      order.mockupSvgs.forEach(m => {
+        if (m.png) imagenes.push({ src: m.png, nombre: `Estampado_${(m.prenda||'prenda').replace(/\s+/g,'_')}.png` });
+      });
+    } else if (order.mockupSvg) {
+      imagenes.push({ src: order.mockupSvg, nombre: 'Estampado_Posicion.png' });
     }
 
-    const order = orders.find(o => o.id === id);
-    if (!order) return;
+    (order.fotos || []).filter(f => f && (f.url || f.data) && f.type && f.type.startsWith('image/')).forEach((f, i) => {
+      const ext = f.type.includes('png') ? 'png' : 'jpg';
+      imagenes.push({ src: f.url || f.data, nombre: `Diseno_${i+1}.${ext}` });
+    });
 
-    const listId = order.listId;
-    if (!listId) {
-      showToast('⚠️ Esta orden no tiene tablero/lista seleccionada', true);
-      return;
-    }
+    (order.fotosEstampado || []).filter(f => f && (f.url || f.data) && f.type && f.type.startsWith('image/')).forEach((f, i) => {
+      const ext = f.type.includes('png') ? 'png' : 'jpg';
+      imagenes.push({ src: f.url || f.data, nombre: `Estampado_foto_${i+1}.${ext}` });
+    });
 
+    Object.entries(order.fotosPrendas || {}).forEach(([prenda, fotos]) => {
+      (fotos || []).filter(f => f && (f.url || f.data) && f.type && f.type.startsWith('image/')).forEach((f, i) => {
+        const ext = f.type.includes('png') ? 'png' : 'jpg';
+        imagenes.push({ src: f.url || f.data, nombre: `${prenda}_foto_${i+1}.${ext}` });
+      });
+    });
+
+    const _gorrasImg = order.gorras || (order.gorra ? [order.gorra] : []);
+    _gorrasImg.forEach((g, gi) => {
+      const label = g.modelo ? g.modelo.replace(/\s+/g,'_') : `Modelo_${gi+1}`;
+      if (g.mockupPng) imagenes.push({ src: g.mockupPng, nombre: `Gorra_${label}_mockup.png` });
+      (g.fotos || []).filter(f => f && (f.url || f.data) && f.type && f.type.startsWith('image/')).forEach((f, i) => {
+        const ext = f.type.includes('png') ? 'png' : 'jpg';
+        imagenes.push({ src: f.url || f.data, nombre: `Gorra_${label}_foto_${i+1}.${ext}` });
+      });
+    });
+
+    const _parchesImg = order.parches || (order.parche ? [order.parche] : []);
+    _parchesImg.forEach((p, pi) => {
+      (p.fotos || []).filter(f => f && (f.url || f.data) && f.type && f.type.startsWith('image/')).forEach((f, i) => {
+        const ext = f.type.includes('png') ? 'png' : 'jpg';
+        imagenes.push({ src: f.url || f.data, nombre: `Parche_${pi+1}_foto_${i+1}.${ext}` });
+      });
+    });
+
+    (order.fotosOtros || []).filter(f => f && (f.url || f.data) && f.type && f.type.startsWith('image/')).forEach((f, i) => {
+      const ext = f.type.includes('png') ? 'png' : 'jpg';
+      imagenes.push({ src: f.url || f.data, nombre: `Otros_foto_${i+1}.${ext}` });
+    });
+
+    return imagenes;
+  }
+
+  async function createTrelloCardForOrder(order, cfg) {
     const desc = buildTrelloDesc(order);
     const name = `📦 ${order.cliente.nombre} — ${order.fecha}${order.vence ? ' (Vence: ' + order.vence + ')' : ''}`;
 
-    // Trello acepta fechas en ISO 8601 UTC
     let dueDate = null;
     if (order.vence) {
       let parts;
@@ -3543,90 +3625,80 @@
       }
     }
 
+    const body = {
+      key: cfg.apiKey,
+      token: cfg.token,
+      name: name,
+      desc: desc,
+      idList: order.listId,
+    };
+    if (dueDate) body.due = dueDate;
+
+    const res = await fetch('https://api.trello.com/1/cards', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text().catch(() => res.status);
+      throw new Error(`${res.status}: ${errText}`);
+    }
+
+    const card = await res.json();
+    return card.id;
+  }
+
+  async function uploadTrelloOrderAttachments(cardId, order, cfg, pdfUrl) {
+    const imagenes = collectOrderImages(order);
+    for (const img of imagenes) {
+      await _uploadTrelloAttachment(cardId, img.src, img.nombre, cfg);
+    }
+    if (pdfUrl) {
+      const pdfName = `Orden_${order.cliente.nombre.replace(/\s+/g,'_')}.pdf`;
+      await _uploadTrelloAttachment(cardId, pdfUrl, pdfName, cfg);
+    }
+    return imagenes.length;
+  }
+
+  async function autoSendOrderToTrello(order, pdfUrl) {
+    const cfg = trelloConfig;
+    if (!cfg.apiKey || !cfg.token || !order.listId) return false;
+
+    const cardId = await createTrelloCardForOrder(order, cfg);
+    await uploadTrelloOrderAttachments(cardId, order, cfg, pdfUrl);
+
+    order.trelloSent = true;
+    order.trelloCardId = cardId;
+    await db.collection('orders').doc(String(order.id)).update({
+      trelloSent: true,
+      trelloCardId: cardId,
+    });
+    return true;
+  }
+
+  async function sendToTrello(id) {
+    const cfg = trelloConfig;
+    if (!cfg.apiKey || !cfg.token) {
+      showToast('⚠️ Configura Trello primero', true);
+      openTrelloModal();
+      return;
+    }
+
+    const order = orders.find(o => o.id === id);
+    if (!order) return;
+
+    if (!order.listId) {
+      showToast('⚠️ Esta orden no tiene tablero/lista seleccionada', true);
+      return;
+    }
+
     const btn = document.querySelector(`#card-${id} .btn-trello`);
     if (btn) { btn.textContent = '⏳ Enviando...'; btn.disabled = true; }
 
     try {
-      const body = {
-        key: cfg.apiKey,
-        token: cfg.token,
-        name: name,
-        desc: desc,
-        idList: listId,
-      };
-      if (dueDate) body.due = dueDate;
-
-      const res = await fetch('https://api.trello.com/1/cards', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-
-      if (!res.ok) {
-        const errText = await res.text().catch(() => res.status);
-        throw new Error(`${res.status}: ${errText}`);
-      }
-
-      const card = await res.json();
-      const cardId = card.id;
-
-      // ── RECOGER TODAS LAS IMÁGENES ─────────────────────────────
-      const imagenes = [];
-
-      // Mockups de posición de estampado
-      if (order.mockupSvgs && order.mockupSvgs.length) {
-        order.mockupSvgs.forEach(m => {
-          if (m.png) imagenes.push({ src: m.png, nombre: `Estampado_${(m.prenda||'prenda').replace(/\s+/g,'_')}.png` });
-        });
-      } else if (order.mockupSvg) {
-        imagenes.push({ src: order.mockupSvg, nombre: 'Estampado_Posicion.png' });
-      }
-
-      // Fotos generales del diseño
-      (order.fotos || []).filter(f => f && (f.url || f.data) && f.type && f.type.startsWith('image/')).forEach((f, i) => {
-        const ext = f.type.includes('png') ? 'png' : 'jpg';
-        imagenes.push({ src: f.url || f.data, nombre: `Diseno_${i+1}.${ext}` });
-      });
-
-      // Fotos de estampado generales
-      (order.fotosEstampado || []).filter(f => f && (f.url || f.data) && f.type && f.type.startsWith('image/')).forEach((f, i) => {
-        const ext = f.type.includes('png') ? 'png' : 'jpg';
-        imagenes.push({ src: f.url || f.data, nombre: `Estampado_foto_${i+1}.${ext}` });
-      });
-
-      // Fotos por prenda
-      Object.entries(order.fotosPrendas || {}).forEach(([prenda, fotos]) => {
-        (fotos || []).filter(f => f && (f.url || f.data) && f.type && f.type.startsWith('image/')).forEach((f, i) => {
-          const ext = f.type.includes('png') ? 'png' : 'jpg';
-          imagenes.push({ src: f.url || f.data, nombre: `${prenda}_foto_${i+1}.${ext}` });
-        });
-      });
-
-      // Gorras: mockup + fotos
-      const _gorrasImg = order.gorras || (order.gorra ? [order.gorra] : []);
-      _gorrasImg.forEach((g, gi) => {
-        const label = g.modelo ? g.modelo.replace(/\s+/g,'_') : `Modelo_${gi+1}`;
-        if (g.mockupPng) imagenes.push({ src: g.mockupPng, nombre: `Gorra_${label}_mockup.png` });
-        (g.fotos || []).filter(f => f && (f.url || f.data) && f.type && f.type.startsWith('image/')).forEach((f, i) => {
-          const ext = f.type.includes('png') ? 'png' : 'jpg';
-          imagenes.push({ src: f.url || f.data, nombre: `Gorra_${label}_foto_${i+1}.${ext}` });
-        });
-      });
-
-      // Parches: fotos
-      const _parchesImg = order.parches || (order.parche ? [order.parche] : []);
-      _parchesImg.forEach((p, pi) => {
-        (p.fotos || []).filter(f => f && (f.url || f.data) && f.type && f.type.startsWith('image/')).forEach((f, i) => {
-          const ext = f.type.includes('png') ? 'png' : 'jpg';
-          imagenes.push({ src: f.url || f.data, nombre: `Parche_${pi+1}_foto_${i+1}.${ext}` });
-        });
-      });
-
-      // Fotos otros trabajos
-      (order.fotosOtros || []).filter(f => f && (f.url || f.data) && f.type && f.type.startsWith('image/')).forEach((f, i) => {
-        const ext = f.type.includes('png') ? 'png' : 'jpg';
-        imagenes.push({ src: f.url || f.data, nombre: `Otros_foto_${i+1}.${ext}` });
-      });
+      const cardId = await createTrelloCardForOrder(order, cfg);
+      const imagenes = collectOrderImages(order);
 
       if (imagenes.length) {
         if (btn) btn.textContent = `⏳ Subiendo ${imagenes.length} imagen${imagenes.length > 1 ? 'es' : ''}...`;
@@ -3634,9 +3706,14 @@
           await _uploadTrelloAttachment(cardId, img.src, img.nombre, cfg);
         }
       }
-      // ───────────────────────────────────────────────────────────
+
+      if (order.pdfUrl) {
+        const pdfName = `Orden_${order.cliente.nombre.replace(/\s+/g,'_')}.pdf`;
+        await _uploadTrelloAttachment(cardId, order.pdfUrl, pdfName, cfg);
+      }
 
       order.trelloSent = true;
+      order.trelloCardId = cardId;
       await fbUpdateOrder(order);
       renderOrders();
       const imgMsg = imagenes.length ? ` con ${imagenes.length} imagen${imagenes.length > 1 ? 'es' : ''}` : '';
@@ -4786,13 +4863,7 @@ Reglas:
   }
 
   // generacion de PDF con jsPDF
-  async function generarPDF(id) {
-    const order = orders.find(o => o.id === id);
-    if (!order) return;
-
-    showToast('⏳ Generando PDF...');
-    // tarda un segundo en arrancar jspdf, normal
-
+  async function buildOrderPdfDoc(order) {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
@@ -5529,12 +5600,23 @@ Reglas:
     }
 
     const filename = `orden_${order.cliente.nombre.replace(/\s+/g,'_')}_${order.fecha}.pdf`;
+    return { doc, filename };
+  }
 
-    // Mostrar previsualización en modal en vez de descargar directamente
+  async function generarPdfBlobForOrder(order) {
+    const { doc, filename } = await buildOrderPdfDoc(order);
+    return { blob: doc.output('blob'), filename };
+  }
+
+  async function generarPDF(id) {
+    const order = orders.find(o => o.id === id);
+    if (!order) return;
+
+    showToast('⏳ Generando PDF...');
+    const { doc, filename } = await buildOrderPdfDoc(order);
     const pdfBlob = doc.output('blob');
     const pdfUrl  = URL.createObjectURL(pdfBlob);
 
-    // Guardar referencia para el botón de descarga
     window._pdfPreviewUrl      = pdfUrl;
     window._pdfPreviewFilename = filename;
     window._pdfPreviewDoc      = doc;
@@ -6521,6 +6603,7 @@ _Los plazos de entrega están sujetos a posibles variaciones por causas externas
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
 <script>
   const firebaseConfig = {
     apiKey: "AIzaSyAa5AurmKRHiyR3ZWMcMaxrOoDtfRweOrY",
@@ -6531,9 +6614,16 @@ _Los plazos de entrega están sujetos a posibles variaciones por causas externas
     appId: "1:888060064830:web:4eb68e2a74cb28b6204d6f"
   };
   firebase.initializeApp(firebaseConfig);
-  const db   = firebase.firestore();
-  const auth = firebase.auth();
+  const db      = firebase.firestore();
+  const storage = firebase.storage();
+  const auth    = firebase.auth();
   emailjs.init("mzTueQdgdzej0XNZt");
+
+  async function uploadPdfToFirebase(blob, orderId, filename) {
+    const ref = storage.ref(`ordenes/${orderId}/${filename}`);
+    const snapshot = await ref.put(blob, { contentType: 'application/pdf' });
+    return await snapshot.ref.getDownloadURL();
+  }
 
   auth.onAuthStateChanged(user => {
     if (user) {
