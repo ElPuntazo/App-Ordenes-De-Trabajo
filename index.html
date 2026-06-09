@@ -3055,43 +3055,45 @@
 
   function buildOrderEmailParams(order, pdfUrl) {
     const _c = order.cliente || {};
+    const _s = (v) => (v == null || v === '' || v === '-') ? 'N/A' : String(v).replace(/\u2014/g, '-').replace(/\u2013/g, '-');
     const sizeCols = ['XXS','XS','S','M','L','XL','XXL','3XL','4XL','5XL'];
     const _sizes = (order.sizes || []).filter(r => r.modelo);
     const tallasTexto = _sizes.length
       ? _sizes.map(r => {
           const total = sizeCols.reduce((a,s)=>a+(parseInt(r[s.toLowerCase()]||r[s]||0)||0),0);
           const detalle = sizeCols.filter(s=>parseInt(r[s.toLowerCase()]||r[s]||0)>0).map(s=>`${s}:${r[s.toLowerCase()]||r[s]}`).join(' | ');
-          return `${r.modelo||''} (${r.color||''}) — ${detalle} — TOTAL: ${total}`;
-        }).join('\n')
-      : '—';
+          return `${r.modelo||''} (${r.color||''}) - ${detalle} - TOTAL: ${total}`;
+        }).join(' / ')
+      : 'N/A';
     const gorrasTexto = (order.gorras||[]).length
-      ? (order.gorras||[]).map(g=>`${g.unidades||''} uds | Modelo: ${g.modelo||''} | Tela: ${g.colorTela||''} | Hilo: ${g.colorHilo||''} | Posición: ${(g.posiciones||[]).join(', ')}`).join('\n')
-      : '—';
+      ? (order.gorras||[]).map(g=>`${g.unidades||''} uds | ${g.modelo||''} | ${g.colorTela||''} | ${g.colorHilo||''}`).join(' / ')
+      : 'N/A';
     const parchesTexto = (order.parches||[]).length
-      ? (order.parches||[]).map(p=>`Tipo: ${p.tipo||''} | ${p.unidades||''} uds | ${p.ancho||''}x${p.alto||''}cm | Hilo: ${p.colorHilo||''} | Diseño: ${p.disenomini||''}`).join('\n')
-      : '—';
+      ? (order.parches||[]).map(p=>`${p.tipo||''} | ${p.unidades||''} uds | ${p.ancho||''}x${p.alto||''}cm`).join(' / ')
+      : 'N/A';
+    const pdfLink = (pdfUrl && pdfUrl !== '-' && pdfUrl.startsWith('http')) ? pdfUrl : '';
     return {
       name:        'El Puntazo',
       email:       'info@elpuntazo.es',
-      cliente:     (_c.nombre||'Sin nombre'),
-      telefono:    (_c.telefono||'—'),
-      entrega:     (order.entrega==='recoge'?'Recoge en tienda':'Envío a domicilio'),
-      fecha:       (order.fecha||'—'),
-      vence:       (order.vence||'—'),
-      trabajo:     (order.trabajo||'—'),
-      obs:         (order.obs||'—'),
-      productos:   (order.productos||[]).join(', ') || '—',
-      servicios:   (order.servicios||[]).join(', ') || '—',
+      cliente:     _s(_c.nombre),
+      telefono:    _s(_c.telefono),
+      entrega:     (order.entrega==='recoge'?'Recoge en tienda':'Envio a domicilio'),
+      fecha:       _s(order.fecha),
+      vence:       _s(order.vence),
+      trabajo:     _s(order.trabajo),
+      obs:         _s(order.obs),
+      productos:   (order.productos||[]).join(', ') || 'N/A',
+      servicios:   (order.servicios||[]).join(', ') || 'N/A',
       tallas:      tallasTexto,
-      posiciones:  (order.posiciones||[]).join(', ') || '—',
-      color_diseno:(order.colorDiseno||'—'),
-      obs_estampado: (typeof (order.obsEstampado||'') === 'string' ? (order.obsEstampado||'—') : Object.values(order.obsEstampado||{}).join(', ')||'—'),
+      posiciones:  (order.posiciones||[]).join(', ') || 'N/A',
+      color_diseno:_s(order.colorDiseno),
+      obs_estampado: _s(typeof (order.obsEstampado||'') === 'string' ? (order.obsEstampado||'') : Object.values(order.obsEstampado||{}).join(', ')),
       gorras:      gorrasTexto,
       parches:     parchesTexto,
-      otros:       (order.otros||'—'),
-      estado:      (order.estado||'Pendiente'),
-      orden_id:    (order.id||''),
-      pdf_url:     (pdfUrl || '—'),
+      otros:       _s(order.otros),
+      estado:      _s(order.estado||'Pendiente'),
+      orden_id:    String(order.id||''),
+      pdf_url:     pdfLink,
     };
   }
 
