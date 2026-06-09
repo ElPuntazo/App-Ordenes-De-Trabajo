@@ -3102,33 +3102,40 @@
     return emailjs.send('service_gmenkch', 'template_z2wve1q', params);
   }
 
-  const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwFs2fVARx36fdkZ4SIuDUBr4oQRrlkXtAqdrb6t0mdkmJSbnvdPd1--KxFD1EDrNGYrA/exec';
+  const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxOFxwRBgWtPcmeY_IqTa4THqMztakWO9gpNgcN0VzPHm2dvVyiv7d-D05bUPQ-c-UMZg/exec';
+  const ORDER_EMAIL_TO   = 'info@elpuntazo.es';
 
   async function sendPdfByGoogleScript(order, pdfBlob) {
-    try {
-      const filename = `Orden_${(order.cliente?.nombre||'cliente').replace(/\s+/g,'_')}_${order.fecha||''}.pdf`;
-      const base64 = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result.split(',')[1]);
-        reader.onerror = reject;
-        reader.readAsDataURL(pdfBlob);
-      });
-      const res = await fetch(GOOGLE_SCRIPT_URL, {
-        method: 'POST',
-        body: JSON.stringify({
-          pdfBase64: base64,
-          filename,
-          cliente: order.cliente?.nombre || 'Sin nombre',
-          fecha: order.fecha || '',
-        }),
-      });
-      const json = await res.json();
-      if (!json.ok) throw new Error(json.error || 'Error desconocido');
-      return true;
-    } catch(e) {
-      console.warn('Google Script email failed:', e);
-      return false;
+    const filename = `Orden_${(order.cliente?.nombre||'cliente').replace(/\s+/g,'_')}_${order.fecha||''}.pdf`;
+    const base64 = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload  = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(pdfBlob);
+    });
+
+    // text/plain => peticion "simple", sin preflight CORS, y SI podemos leer la respuesta
+    const res = await fetch(GOOGLE_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({
+        to:        ORDER_EMAIL_TO,
+        subject:   `Nueva orden – ${order.cliente?.nombre||'Sin nombre'} (${order.fecha||''})`,
+        cliente:   order.cliente?.nombre || 'Sin nombre',
+        telefono:  order.cliente?.telefono || '',
+        fecha:     order.fecha || '',
+        filename,
+        pdfBase64: base64,
+      }),
+    });
+
+    const txt = await res.text();
+    let json; try { json = JSON.parse(txt); } catch { json = { ok:false, raw:txt }; }
+    if (!res.ok || !json.ok) {
+      console.error('Apps Script respuesta:', res.status, txt);
+      throw new Error(json.error || `HTTP ${res.status}`);
     }
+    return true;
   }
 
   async function postSaveAutomation(order) {
