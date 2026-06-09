@@ -3266,11 +3266,9 @@
       showToast('⏳ Subiendo fotos a la nube…');
       await fbSaveOrder(order);
       await postSaveAutomation(order);
-      showToast('✅ Orden guardada y enviada ☁️');
-      setTimeout(() => {
-        limpiarFormulario(true);
-        showPanel('orders');
-      }, window.innerWidth < 768 ? 800 : 300);
+      showToast('✅ Orden guardada correctamente');
+      limpiarFormulario(true);
+      showPanel('orders');
     } catch(e) {
       orders.shift();
       showToast('❌ Error al guardar: ' + e.message, true);
