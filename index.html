@@ -3095,8 +3095,24 @@
     };
   }
 
-  function sendOrderEmail(order, pdfUrl) {
-    return emailjs.send('service_gmenkch', 'template_z2wve1q', buildOrderEmailParams(order, pdfUrl));
+  async function sendOrderEmail(order, pdfUrl, pdfBlob) {
+    const params = buildOrderEmailParams(order, pdfUrl);
+    if (pdfBlob) {
+      try {
+        const base64 = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result.split(',')[1]);
+          reader.onerror = reject;
+          reader.readAsDataURL(pdfBlob);
+        });
+        const filename = `Orden_${(order.cliente?.nombre||'cliente').replace(/\s+/g,'_')}_${order.fecha||''}.pdf`;
+        params.pdf_attachment = base64;
+        params.pdf_filename = filename;
+      } catch(e) {
+        console.warn('No se pudo convertir PDF a base64:', e);
+      }
+    }
+    return emailjs.send('service_gmenkch', 'template_z2wve1q', params);
   }
 
   async function postSaveAutomation(order) {
@@ -3108,7 +3124,7 @@
       const { blob, filename } = await generarPdfBlobForOrder(order);
       pdfBlob = blob;
       showToast('⏳ Subiendo PDF a la nube...');
-      pdfUrl = await uploadPdfToFirebase(blob, order.id, filename);
+      pdfUrl = await uploadPdfToCloudinary(blob, filename);
       if (pdfUrl) {
         order.pdfUrl = pdfUrl;
         const idx = orders.findIndex(x => x.id === order.id);
@@ -3135,7 +3151,7 @@
     try {
       if (typeof emailjs !== 'undefined') {
         showToast('⏳ Enviando email...');
-        await sendOrderEmail(order, pdfUrl);
+        await sendOrderEmail(order, pdfUrl, pdfBlob);
         showToast('✅ Email enviado correctamente');
       } else {
         showToast('⚠️ EmailJS no disponible', true);
@@ -6720,6 +6736,26 @@ _Los plazos de entrega están sujetos a posibles variaciones por causas externas
       return json.secure_url || null;
     } catch(e) {
       console.warn('Cloudinary upload failed:', e);
+      return null;
+    }
+  }
+
+  // Sube un PDF (Blob) a Cloudinary como raw y devuelve la URL pública
+  async function uploadPdfToCloudinary(blob, filename) {
+    try {
+      const formData = new FormData();
+      formData.append('file', blob, filename);
+      formData.append('upload_preset', CLOUDINARY_PRESET);
+      formData.append('resource_type', 'raw');
+      const res = await fetch(
+        `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/raw/upload`,
+        { method: 'POST', body: formData }
+      );
+      if (!res.ok) throw new Error('Cloudinary PDF ' + res.status);
+      const json = await res.json();
+      return json.secure_url || null;
+    } catch(e) {
+      console.warn('Cloudinary PDF upload failed:', e);
       return null;
     }
   }
