@@ -3136,9 +3136,13 @@
       if (typeof emailjs !== 'undefined') {
         showToast('⏳ Enviando email...');
         await sendOrderEmail(order, pdfUrl);
+        showToast('✅ Email enviado correctamente');
+      } else {
+        showToast('⚠️ EmailJS no disponible', true);
       }
     } catch (e) {
-      console.warn('Email no enviado:', e);
+      console.error('Email no enviado:', e);
+      showToast('❌ Email fallido: ' + (e?.text || e?.message || JSON.stringify(e)), true);
     }
   }
 
