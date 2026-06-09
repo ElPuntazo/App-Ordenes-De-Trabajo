@@ -3097,21 +3097,6 @@
 
   async function sendOrderEmail(order, pdfUrl, pdfBlob) {
     const params = buildOrderEmailParams(order, pdfUrl);
-    if (pdfBlob) {
-      try {
-        const base64 = await new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result.split(',')[1]);
-          reader.onerror = reject;
-          reader.readAsDataURL(pdfBlob);
-        });
-        const filename = `Orden_${(order.cliente?.nombre||'cliente').replace(/\s+/g,'_')}_${order.fecha||''}.pdf`;
-        params.pdf_attachment = base64;
-        params.pdf_filename = filename;
-      } catch(e) {
-        console.warn('No se pudo convertir PDF a base64:', e);
-      }
-    }
     return emailjs.send('service_gmenkch', 'template_z2wve1q', params);
   }
 
@@ -6743,27 +6728,16 @@ _Los plazos de entrega están sujetos a posibles variaciones por causas externas
   // Sube un PDF (Blob) a Cloudinary como raw y devuelve la URL pública
   async function uploadPdfToCloudinary(blob, filename) {
     try {
-      // Convertir blob a base64 data URI
-      const base64 = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-      });
       const formData = new FormData();
-      formData.append('file', base64);
-      formData.append('upload_preset', CLOUDINARY_PRESET);
-      formData.append('resource_type', 'image');
-      formData.append('format', 'pdf');
+      formData.append('file', blob, filename);
+      formData.append('upload_preset', 'puntazo_pdf');
       const res = await fetch(
-        `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`,
+        `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/raw/upload`,
         { method: 'POST', body: formData }
       );
       if (!res.ok) throw new Error('Cloudinary PDF ' + res.status);
       const json = await res.json();
-      const url = json.secure_url || null;
-      // fl_attachment fuerza descarga directa como PDF
-      return url ? url.replace('/upload/', '/upload/fl_attachment/') : null;
+      return json.secure_url || null;
     } catch(e) {
       console.warn('Cloudinary PDF upload failed:', e);
       return null;
