@@ -3101,10 +3101,12 @@
 
   async function postSaveAutomation(order) {
     let pdfUrl = null;
+    let pdfBlob = null;
 
     try {
       showToast('⏳ Generando PDF...');
       const { blob, filename } = await generarPdfBlobForOrder(order);
+      pdfBlob = blob;
       showToast('⏳ Subiendo PDF a la nube...');
       pdfUrl = await uploadPdfToFirebase(blob, order.id, filename);
       if (pdfUrl) {
@@ -3122,7 +3124,8 @@
     try {
       if (trelloConfig.apiKey && trelloConfig.token && order.listId) {
         showToast('⏳ Enviando a Trello...');
-        await autoSendOrderToTrello(order, pdfUrl);
+        // Pasar el blob directamente para que Trello reciba el PDF completo
+        await autoSendOrderToTrello(order, pdfBlob || pdfUrl);
         renderOrders();
       }
     } catch (e) {
@@ -3528,7 +3531,9 @@
   async function _uploadTrelloAttachment(cardId, src, filename, cfg) {
     try {
       let blob;
-      if (src && src.startsWith('data:')) {
+      if (src instanceof Blob) {
+        blob = src;
+      } else if (src && src.startsWith('data:')) {
         blob = dataURLtoBlob(src);
       } else if (src && src.startsWith('http')) {
         // URL de Cloudinary — descargar y subir
@@ -3649,14 +3654,23 @@
     return card.id;
   }
 
-  async function uploadTrelloOrderAttachments(cardId, order, cfg, pdfUrl) {
+  async function uploadTrelloOrderAttachments(cardId, order, cfg, pdfBlob) {
     const imagenes = collectOrderImages(order);
     for (const img of imagenes) {
       await _uploadTrelloAttachment(cardId, img.src, img.nombre, cfg);
     }
-    if (pdfUrl) {
+    // pdfBlob puede ser un Blob directo, una URL remota, o null
+    if (pdfBlob) {
       const pdfName = `Orden_${order.cliente.nombre.replace(/\s+/g,'_')}.pdf`;
-      await _uploadTrelloAttachment(cardId, pdfUrl, pdfName, cfg);
+      await _uploadTrelloAttachment(cardId, pdfBlob, pdfName, cfg);
+    } else {
+      // Fallback: generar PDF en el momento si no se proporcionó
+      try {
+        const { blob, filename } = await generarPdfBlobForOrder(order);
+        await _uploadTrelloAttachment(cardId, blob, filename, cfg);
+      } catch(e) {
+        console.warn('No se pudo generar PDF para adjuntar a Trello:', e);
+      }
     }
     return imagenes.length;
   }
@@ -3707,9 +3721,18 @@
         }
       }
 
-      if (order.pdfUrl) {
-        const pdfName = `Orden_${order.cliente.nombre.replace(/\s+/g,'_')}.pdf`;
-        await _uploadTrelloAttachment(cardId, order.pdfUrl, pdfName, cfg);
+      // Generar PDF fresco igual que al descargar
+      try {
+        if (btn) btn.textContent = '⏳ Generando PDF...';
+        const { blob: pdfBlob, filename: pdfFilename } = await generarPdfBlobForOrder(order);
+        if (btn) btn.textContent = '⏳ Subiendo PDF...';
+        await _uploadTrelloAttachment(cardId, pdfBlob, pdfFilename, cfg);
+      } catch (pdfErr) {
+        console.warn('PDF adjunto Trello fallido, intentando con URL guardada:', pdfErr);
+        if (order.pdfUrl) {
+          const pdfName = `Orden_${order.cliente.nombre.replace(/\s+/g,'_')}.pdf`;
+          await _uploadTrelloAttachment(cardId, order.pdfUrl, pdfName, cfg);
+        }
       }
 
       order.trelloSent = true;
