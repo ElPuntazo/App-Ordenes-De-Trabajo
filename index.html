@@ -6714,11 +6714,16 @@ _Los plazos de entrega están sujetos a posibles variaciones por causas externas
       const formData = new FormData();
       formData.append('file', base64);
       formData.append('upload_preset', CLOUDINARY_PRESET);
+      console.log('Cloudinary upload tipo:', base64.substring(0, 30));
       const res = await fetch(
         `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`,
         { method: 'POST', body: formData }
       );
-      if (!res.ok) throw new Error('Cloudinary ' + res.status);
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        console.warn('Cloudinary error detalle:', JSON.stringify(errJson));
+        throw new Error('Cloudinary ' + res.status);
+      }
       const json = await res.json();
       return json.secure_url || null;
     } catch(e) {
