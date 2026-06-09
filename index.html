@@ -6753,7 +6753,9 @@ _Los plazos de entrega están sujetos a posibles variaciones por causas externas
       );
       if (!res.ok) throw new Error('Cloudinary PDF ' + res.status);
       const json = await res.json();
-      return json.secure_url || null;
+      // Añadir fl_attachment para que el navegador lo descargue correctamente como PDF
+      const url = json.secure_url || null;
+      return url ? url.replace('/upload/', '/upload/fl_attachment/') : null;
     } catch(e) {
       console.warn('Cloudinary PDF upload failed:', e);
       return null;
