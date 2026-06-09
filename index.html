@@ -3102,6 +3102,35 @@
     return emailjs.send('service_gmenkch', 'template_z2wve1q', params);
   }
 
+  const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwFs2fVARx36fdkZ4SIuDUBr4oQRrlkXtAqdrb6t0mdkmJSbnvdPd1--KxFD1EDrNGYrA/exec';
+
+  async function sendPdfByGoogleScript(order, pdfBlob) {
+    try {
+      const filename = `Orden_${(order.cliente?.nombre||'cliente').replace(/\s+/g,'_')}_${order.fecha||''}.pdf`;
+      const base64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(pdfBlob);
+      });
+      const res = await fetch(GOOGLE_SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify({
+          pdfBase64: base64,
+          filename,
+          cliente: order.cliente?.nombre || 'Sin nombre',
+          fecha: order.fecha || '',
+        }),
+      });
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.error || 'Error desconocido');
+      return true;
+    } catch(e) {
+      console.warn('Google Script email failed:', e);
+      return false;
+    }
+  }
+
   async function postSaveAutomation(order) {
     let pdfUrl = null;
     let pdfBlob = null;
@@ -3136,16 +3165,18 @@
     }
 
     try {
-      if (typeof emailjs !== 'undefined') {
-        showToast('⏳ Enviando email...');
-        await sendOrderEmail(order, pdfUrl, pdfBlob);
-        showToast('✅ Email enviado correctamente');
-      } else {
-        showToast('⚠️ EmailJS no disponible', true);
+      if (pdfBlob) {
+        showToast('⏳ Enviando email con PDF...');
+        const ok = await sendPdfByGoogleScript(order, pdfBlob);
+        if (ok) {
+          showToast('✅ Email enviado correctamente');
+        } else {
+          showToast('⚠️ Email no enviado', true);
+        }
       }
     } catch (e) {
       console.error('Email no enviado:', e);
-      showToast('❌ Email fallido: ' + (e?.text || e?.message || JSON.stringify(e)), true);
+      showToast('❌ Email fallido: ' + (e?.message || 'Error'), true);
     }
   }
 
@@ -6742,7 +6773,11 @@ _Los plazos de entrega están sujetos a posibles variaciones por causas externas
         `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/raw/upload`,
         { method: 'POST', body: formData }
       );
-      if (!res.ok) throw new Error('Cloudinary PDF ' + res.status);
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        console.warn('Cloudinary PDF error detalle:', JSON.stringify(errJson));
+        throw new Error('Cloudinary PDF ' + res.status);
+      }
       const json = await res.json();
       return json.secure_url || null;
     } catch(e) {
