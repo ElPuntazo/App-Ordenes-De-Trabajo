@@ -3103,39 +3103,34 @@
   }
 
   const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbznyFXWU7lfVuTjFrm8ZyeD5sEwq9nnwLfLVizN9A-mIPf7a_hlP3qitA-x4ThiZ8av1g/exec';
-  const ORDER_EMAIL_TO   = 'info@elpuntazo.es';
 
   async function sendPdfByGoogleScript(order, pdfBlob) {
-    const filename = `Orden_${(order.cliente?.nombre||'cliente').replace(/\s+/g,'_')}_${order.fecha||''}.pdf`;
-    const base64 = await new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload  = () => resolve(reader.result.split(',')[1]);
-      reader.onerror = reject;
-      reader.readAsDataURL(pdfBlob);
-    });
-
-    // text/plain => peticion "simple", sin preflight CORS, y SI podemos leer la respuesta
-    const res = await fetch(GOOGLE_SCRIPT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({
-        to:        ORDER_EMAIL_TO,
-        subject:   `Nueva orden – ${order.cliente?.nombre||'Sin nombre'} (${order.fecha||''})`,
-        cliente:   order.cliente?.nombre || 'Sin nombre',
-        telefono:  order.cliente?.telefono || '',
-        fecha:     order.fecha || '',
+    try {
+      const filename = `Orden_${(order.cliente?.nombre||'cliente').replace(/\s+/g,'_')}_${order.fecha||''}.pdf`;
+      const base64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(pdfBlob);
+      });
+      // Usar GET con parámetros para evitar CORS preflight
+      const params = new URLSearchParams({
+        cliente: order.cliente?.nombre || 'Sin nombre',
+        fecha: order.fecha || '',
         filename,
         pdfBase64: base64,
-      }),
-    });
-
-    const txt = await res.text();
-    let json; try { json = JSON.parse(txt); } catch { json = { ok:false, raw:txt }; }
-    if (!res.ok || !json.ok) {
-      console.error('Apps Script respuesta:', res.status, txt);
-      throw new Error(json.error || `HTTP ${res.status}`);
+      });
+      await fetch(GOOGLE_SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: params.toString(),
+      });
+      return true;
+    } catch(e) {
+      console.warn('Google Script email failed:', e);
+      return false;
     }
-    return true;
   }
 
   async function postSaveAutomation(order) {
