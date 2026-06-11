@@ -5893,21 +5893,26 @@ Reglas:
     if (tel.startsWith('6') || tel.startsWith('7')) tel = '34' + tel;
     const productos = order.productos.length ? order.productos.join(', ') : '-';
     const servicios = order.servicios.length ? order.servicios.join(', ') : '-';
-    const baseMsg = `¡Hola ${order.cliente.nombre}!
+    const baseMsg = `Estimado/a ${order.cliente.nombre}:
 
-Te confirmamos tu pedido en *El Puntazo*:
+Desde *El Puntazo* tenemos el placer de confirmarle formalmente la recepción de su pedido. A continuación le adjuntamos el detalle del mismo junto con la orden de trabajo en formato PDF para su comprobación:
 
 *Producto:* ${productos}
 *Servicio:* ${servicios}
-*Fecha entrada:* ${order.fecha}${order.vence ? `
-*Fecha entrega:* ${order.vence}` : ''}
-*Entrega:* ${order.entrega === 'recoge' ? 'Recoges en tienda' : 'Envío a domicilio'}${order.trabajo ? `
-*Trabajo:* ${order.trabajo}` : ''}${order.obs ? `
-*Notas:* ${order.obs}` : ''}
+*Fecha de entrada:* ${order.fecha}${order.vence ? `
+*Fecha de entrega:* ${order.vence}` : ''}
+*Modalidad de entrega:* ${order.entrega === 'recoge' ? 'Recogida en tienda' : 'Envío a domicilio'}${order.trabajo ? `
+*Trabajo a realizar:* ${order.trabajo}` : ''}${order.obs ? `
+*Observaciones:* ${order.obs}` : ''}
 
-_Los plazos de entrega están sujetos a posibles variaciones por causas externas a la empresa. En caso de producirse alguna incidencia, se informará de inmediato._
+_Los plazos de entrega están sujetos a posibles variaciones por causas externas a la empresa. En caso de producirse alguna incidencia, le informaremos de inmediato._
 
-¡Gracias por confiar en nosotros!`;
+Quedamos a su entera disposición para cualquier consulta o aclaración que pueda necesitar.
+
+Le agradecemos sinceramente la confianza depositada en *El Puntazo*. Es un placer atenderle.
+
+Reciba un cordial saludo,
+*Equipo El Puntazo*`;
 
     // 1) Generar el PDF de la orden
     let pdfBlob = null, pdfFilename = null;
