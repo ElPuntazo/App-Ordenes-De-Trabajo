@@ -5895,7 +5895,7 @@ Reglas:
     const servicios = order.servicios.length ? order.servicios.join(', ') : '-';
     const baseMsg = `Estimado/a ${order.cliente.nombre}:
 
-Desde *El Puntazo* tenemos el placer de confirmarle formalmente la recepción de su pedido. A continuación le adjuntamos el detalle del mismo junto con la orden de trabajo en formato PDF para su comprobación:
+Nos complace confirmarle que hemos recibido y registrado correctamente su pedido en *El Puntazo*. A continuación encontrará el resumen del mismo junto con su orden de trabajo en formato PDF:
 
 *Producto:* ${productos}
 *Servicio:* ${servicios}
@@ -5907,12 +5907,12 @@ Desde *El Puntazo* tenemos el placer de confirmarle formalmente la recepción de
 
 _Los plazos de entrega están sujetos a posibles variaciones por causas externas a la empresa. En caso de producirse alguna incidencia, le informaremos de inmediato._
 
-Quedamos a su entera disposición para cualquier consulta o aclaración que pueda necesitar.
+Quedamos a su entera disposición para cualquier consulta o aclaración.
 
-Le agradecemos sinceramente la confianza depositada en *El Puntazo*. Es un placer atenderle.
+Queremos agradecerle sinceramente la confianza que deposita en nosotros. Para *El Puntazo*, cada pedido es un compromiso con la calidad y el cuidado que su ropa merece. Es un placer tenerle como cliente.
 
 Reciba un cordial saludo,
-*Equipo El Puntazo*`;
+*Equipo El Puntazo* 🧵`;
 
     // 1) Generar el PDF de la orden
     let pdfBlob = null, pdfFilename = null;
