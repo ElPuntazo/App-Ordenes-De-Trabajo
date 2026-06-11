@@ -3303,12 +3303,13 @@
 
     try {
       orders.unshift(order);
-      showToast('⏳ Subiendo fotos a la nube…');
+      showToast('⏳ Guardando orden…');
       await fbSaveOrder(order);
-      await postSaveAutomation(order);
       showToast('✅ Orden guardada correctamente');
       limpiarFormulario(true);
       showPanel('orders');
+      // PDF, Trello y email en segundo plano
+      postSaveAutomation(order).catch(e => console.warn('postSaveAutomation error:', e));
     } catch(e) {
       orders.shift();
       showToast('❌ Error al guardar: ' + e.message, true);
