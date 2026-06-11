@@ -5885,15 +5885,15 @@ Reglas:
     document.body.appendChild(overlay);
   }
 
-  // abrir whatsapp con el mensaje ya escrito
-  function openWhatsApp(id) {
+  // abrir whatsapp con el mensaje ya escrito + adjuntar PDF
+  async function openWhatsApp(id) {
     const order = orders.find(o => o.id === id);
     if (!order) return;
     let tel = order.cliente.telefono.replace(/\D/g, '');
     if (tel.startsWith('6') || tel.startsWith('7')) tel = '34' + tel;
     const productos = order.productos.length ? order.productos.join(', ') : '-';
     const servicios = order.servicios.length ? order.servicios.join(', ') : '-';
-    const msg = `¡Hola ${order.cliente.nombre}!
+    const baseMsg = `¡Hola ${order.cliente.nombre}!
 
 Te confirmamos tu pedido en *El Puntazo*:
 
@@ -5908,6 +5908,72 @@ Te confirmamos tu pedido en *El Puntazo*:
 _Los plazos de entrega están sujetos a posibles variaciones por causas externas a la empresa. En caso de producirse alguna incidencia, se informará de inmediato._
 
 ¡Gracias por confiar en nosotros!`;
+
+    // 1) Generar el PDF de la orden
+    let pdfBlob = null, pdfFilename = null;
+    try {
+      showToast('⏳ Generando PDF...');
+      const r = await generarPdfBlobForOrder(order);
+      pdfBlob = r.blob;
+      pdfFilename = r.filename;
+    } catch(e) {
+      console.warn('No se pudo generar PDF para WhatsApp:', e);
+    }
+
+    // 2) Intento nativo: compartir el PDF directamente por WhatsApp (móvil)
+    if (pdfBlob && navigator.canShare) {
+      try {
+        const file = new File([pdfBlob], pdfFilename, { type: 'application/pdf' });
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: pdfFilename,
+            text: baseMsg,
+          });
+          showToast('✅ PDF compartido');
+          return;
+        }
+      } catch(e) {
+        if (e && e.name === 'AbortError') return; // usuario canceló
+        console.warn('navigator.share con archivo falló:', e);
+      }
+    }
+
+    // 3) Fallback: subir el PDF a la nube y añadir el enlace al mensaje
+    let pdfUrl = order.pdfUrl || null;
+    if (!pdfUrl && pdfBlob) {
+      try {
+        showToast('⏳ Subiendo PDF...');
+        pdfUrl = await uploadPdfToCloudinary(pdfBlob, pdfFilename);
+        if (pdfUrl) {
+          order.pdfUrl = pdfUrl;
+          try {
+            if (typeof db !== 'undefined') {
+              await db.collection('orders').doc(String(order.id)).update({ pdfUrl });
+            }
+          } catch(_) {}
+        }
+      } catch(e) {
+        console.warn('Subida de PDF a Cloudinary falló:', e);
+      }
+    }
+
+    const msg = pdfUrl
+      ? `${baseMsg}\n\n📄 *Orden de trabajo (PDF):* ${pdfUrl}`
+      : baseMsg;
+
+    // 4) Descargar el PDF localmente para que el usuario lo adjunte si hace falta
+    if (pdfBlob && !pdfUrl) {
+      try {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(pdfBlob);
+        a.download = pdfFilename;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+        showToast('📎 PDF descargado, adjúntalo en WhatsApp');
+      } catch(_) {}
+    }
 
     const url = `https://wa.me/${tel}?text=${encodeURIComponent(msg)}`;
     window.open(url, '_blank');
