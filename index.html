@@ -1251,7 +1251,6 @@
             <div class="check-item prod-check-item" onclick="prodItemClick(this)"><input type="hidden" value="Boli"><div class="box"></div>Boli</div>
             <div class="check-item prod-check-item" onclick="prodItemClick(this)"><input type="hidden" value="Bolsa Tela"><div class="box"></div>Bolsa Tela</div>
             <div class="check-item prod-check-item" onclick="prodItemClick(this)"><input type="hidden" value="Bolsa TNT"><div class="box"></div>Bolsa TNT</div>
-            <div class="check-item prod-check-item" onclick="prodItemClick(this)"><input type="hidden" value="Pañuelo"><div class="box"></div>Pañuelo</div>
             <div class="check-item prod-check-item" onclick="prodItemClick(this)"><input type="hidden" value="Chapa"><div class="box"></div>Chapa</div>
           </div>
           <div id="prod-desc-merch" class="prod-desc-area"></div>
@@ -1272,6 +1271,7 @@
             <div class="check-item prod-check-item" onclick="prodItemClick(this)"><input type="hidden" value="Capa de Baño"><div class="box"></div>Capa de Baño</div>
             <div class="check-item prod-check-item" onclick="prodItemClick(this)"><input type="hidden" value="Toquilla"><div class="box"></div>Toquilla</div>
             <div class="check-item prod-check-item" onclick="prodItemClick(this)"><input type="hidden" value="Cojín"><div class="box"></div>Cojín</div>
+            <div class="check-item prod-check-item" onclick="prodItemClick(this)"><input type="hidden" value="Pañuelo"><div class="box"></div>Pañuelo</div>
           </div>
           <div id="prod-desc-bebe" class="prod-desc-area"></div>
         </div>
@@ -1328,6 +1328,53 @@
       .prod-desc-remove:hover { background: var(--red); border-color: var(--red); color: white; }
       body.dark-mode .prod-desc-row textarea { background: #1a1d2e; color: #e8eaf6; border-color: #2e3246; }
       body.dark-mode .prod-desc-row .prod-desc-label { color: #7ba3f5; }
+
+      /* Formulario extendido para productos de Bebé */
+      .prod-desc-row:has(.baby-form-grid) {
+        flex-direction: column;
+        align-items: stretch;
+        background: var(--gray-bg, #f6f7fb);
+        border: 1.5px solid var(--gray-line);
+        border-radius: 8px;
+        padding: 10px;
+      }
+      .prod-desc-row-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+      }
+      .prod-desc-row-header .prod-desc-label { padding-top: 0; }
+      .prod-desc-row-header .prod-desc-remove { margin-top: 0; }
+      .baby-form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+      .baby-form-grid label, .baby-extra-label {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--text-soft);
+      }
+      .baby-form-grid input, .baby-extra-label textarea {
+        padding: 6px 9px;
+        border: 1.5px solid var(--gray-line);
+        border-radius: 7px;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 12px;
+        color: var(--text);
+        font-weight: 400;
+      }
+      .baby-form-grid input:focus, .baby-extra-label textarea:focus { border-color: var(--blue); outline: none; }
+      .baby-extra-label textarea { resize: vertical; }
+      body.dark-mode .prod-desc-row:has(.baby-form-grid) { background: #1a1d2e; border-color: #2e3246; }
+      body.dark-mode .baby-form-grid input, body.dark-mode .baby-extra-label textarea {
+        background: #12141f; color: #e8eaf6; border-color: #2e3246;
+      }
       .prod-cat-header {
         width:100%; display:flex; align-items:center; justify-content:space-between;
         padding:9px 14px; background:var(--blue); color:white;
@@ -1369,6 +1416,9 @@
         'e-prod-grp-merch': 'e-prod-desc-merch',
         'e-prod-grp-bebe':  'e-prod-desc-bebe',
       };
+      /* Grupos que usan el formulario extendido (bebé) en vez del textarea simple */
+      const _babyFormGroups = ['prod-grp-bebe', 'e-prod-grp-bebe'];
+
       function prodItemClick(el) {
         if (el._prodBusy) return;
         el._prodBusy = true;
@@ -1383,16 +1433,56 @@
         const val = el.querySelector('input').value;
 
         el.classList.add('checked');
-        if (descArea && !descArea.querySelector('[data-prod="' + CSS.escape(val) + '"]')) {
-          const row = document.createElement('div');
-          row.className = 'prod-desc-row';
-          row.dataset.prod = val;
+        if (!descArea || descArea.querySelector('[data-prod="' + CSS.escape(val) + '"]')) return;
+
+        const row = document.createElement('div');
+        row.className = 'prod-desc-row';
+        row.dataset.prod = val;
+
+        if (_babyFormGroups.includes(grp.id)) {
+          row.innerHTML = buildBabyFormHTML(val, {});
+        } else {
           row.innerHTML = '<span class="prod-desc-label">' + val + '</span>'
             + '<textarea placeholder="Descripción de ' + val + '..." rows="2" data-prod-desc="' + val + '"></textarea>'
             + '<button class="prod-desc-remove" title="Quitar" onclick="removeProdItem(this)">✕</button>';
-          descArea.appendChild(row);
         }
+        descArea.appendChild(row);
       }
+
+      /* Construye el HTML del mini-formulario de bebé (nombre, fecha, peso, medida, hora, extra) */
+      function buildBabyFormHTML(val, data) {
+        data = data || {};
+        const esc = (s) => (s || '').toString().replace(/"/g, '&quot;');
+        const jsonEsc = (obj) => JSON.stringify(obj).replace(/"/g, '&quot;');
+        return '<div class="prod-desc-row-header">'
+          + '<span class="prod-desc-label">' + val + '</span>'
+          + '<button class="prod-desc-remove" title="Quitar" onclick="removeProdItem(this)">✕</button>'
+          + '</div>'
+          + '<div class="baby-form-grid">'
+            + '<label>Nombre<input type="text" data-baby-field="nombre" value="' + esc(data.nombre) + '" placeholder="Nombre para rellenar"></label>'
+            + '<label>Fecha<input type="date" data-baby-field="fecha" value="' + esc(data.fecha) + '"></label>'
+            + '<label>Peso<input type="text" data-baby-field="peso" value="' + esc(data.peso) + '" placeholder="Ej: 3.2 kg"></label>'
+            + '<label>Medida<input type="text" data-baby-field="medida" value="' + esc(data.medida) + '" placeholder="Ej: 50 cm"></label>'
+            + '<label>Hora<input type="time" data-baby-field="hora" value="' + esc(data.hora) + '"></label>'
+          + '</div>'
+          + '<label class="baby-extra-label">Extra<textarea data-baby-field="extra" rows="2" placeholder="Escribe lo que quieras...">' + esc(data.extra) + '</textarea></label>'
+          + '<textarea data-prod-desc="' + val + '" style="display:none;">' + jsonEsc(data) + '</textarea>';
+      }
+
+      /* Sincroniza los inputs del formulario de bebé con el textarea oculto data-prod-desc */
+      document.addEventListener('input', function(e) {
+        const field = e.target.closest('[data-baby-field]');
+        if (!field) return;
+        const row = field.closest('.prod-desc-row');
+        if (!row) return;
+        const hidden = row.querySelector('[data-prod-desc]');
+        if (!hidden) return;
+        const data = {};
+        row.querySelectorAll('[data-baby-field]').forEach(f => {
+          data[f.dataset.babyField] = f.value;
+        });
+        hidden.value = JSON.stringify(data);
+      });
 
       function removeProdItem(btn) {
         const row = btn.closest('.prod-desc-row');
@@ -1431,7 +1521,13 @@
           const row = document.createElement('div');
           row.className = 'prod-desc-row';
           row.dataset.prod = val;
-          row.innerHTML = `<span class="prod-desc-label">${val}</span><textarea placeholder="Descripción de ${val}..." rows="2" data-prod-desc="${val}">${descs[val]}</textarea><button class="prod-desc-remove" title="Quitar" onclick="removeProdItem(this)">✕</button>`;
+          if (_babyFormGroups.includes(groupId)) {
+            let data = {};
+            try { data = JSON.parse(descs[val]); } catch(_) { data = { extra: descs[val] }; }
+            row.innerHTML = buildBabyFormHTML(val, data);
+          } else {
+            row.innerHTML = `<span class="prod-desc-label">${val}</span><textarea placeholder="Descripción de ${val}..." rows="2" data-prod-desc="${val}">${descs[val]}</textarea><button class="prod-desc-remove" title="Quitar" onclick="removeProdItem(this)">✕</button>`;
+          }
           area.appendChild(row);
         });
       }
@@ -6151,7 +6247,6 @@ Adjuntamos su orden de trabajo en PDF. Cualquier duda, quedamos a su disposició
               <div class="check-item prod-check-item" onclick="prodItemClick(this)"><input type="hidden" value="Boli"><div class="box"></div>Boli</div>
               <div class="check-item prod-check-item" onclick="prodItemClick(this)"><input type="hidden" value="Bolsa Tela"><div class="box"></div>Bolsa Tela</div>
               <div class="check-item prod-check-item" onclick="prodItemClick(this)"><input type="hidden" value="Bolsa TNT"><div class="box"></div>Bolsa TNT</div>
-              <div class="check-item prod-check-item" onclick="prodItemClick(this)"><input type="hidden" value="Pañuelo"><div class="box"></div>Pañuelo</div>
               <div class="check-item prod-check-item" onclick="prodItemClick(this)"><input type="hidden" value="Chapa"><div class="box"></div>Chapa</div>
             </div>
             <div id="e-prod-desc-merch" class="prod-desc-area"></div>
@@ -6172,6 +6267,7 @@ Adjuntamos su orden de trabajo en PDF. Cualquier duda, quedamos a su disposició
               <div class="check-item prod-check-item" onclick="prodItemClick(this)"><input type="hidden" value="Capa de Baño"><div class="box"></div>Capa de Baño</div>
               <div class="check-item prod-check-item" onclick="prodItemClick(this)"><input type="hidden" value="Toquilla"><div class="box"></div>Toquilla</div>
               <div class="check-item prod-check-item" onclick="prodItemClick(this)"><input type="hidden" value="Cojín"><div class="box"></div>Cojín</div>
+              <div class="check-item prod-check-item" onclick="prodItemClick(this)"><input type="hidden" value="Pañuelo"><div class="box"></div>Pañuelo</div>
             </div>
             <div id="e-prod-desc-bebe" class="prod-desc-area"></div>
           </div>
