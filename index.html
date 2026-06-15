@@ -5939,29 +5939,27 @@ Reglas:
   async function openWhatsApp(id) {
     const order = orders.find(o => o.id === id);
     if (!order) return;
+
+    // Abrir la pestaña YA (en el mismo gesto del usuario), para que tablets
+    // no bloqueen el popup tras los await posteriores. Se redirige luego.
+    const waTab = window.open('about:blank', '_blank');
+
     let tel = order.cliente.telefono.replace(/\D/g, '');
     if (tel.startsWith('6') || tel.startsWith('7')) tel = '34' + tel;
     const productos = order.productos.length ? order.productos.join(', ') : '-';
     const servicios = order.servicios.length ? order.servicios.join(', ') : '-';
-    const baseMsg = `Estimado/a ${order.cliente.nombre}:
+    const baseMsg = `Hola ${order.cliente.nombre}, 👋
 
-Nos complace confirmarle que hemos recibido y registrado correctamente su pedido en *El Puntazo*. A continuación encontrará el resumen del mismo junto con su orden de trabajo en formato PDF:
+Le confirmamos que hemos registrado su pedido en *El Puntazo*:
 
 *Producto:* ${productos}
 *Servicio:* ${servicios}
 *Fecha de entrada:* ${order.fecha}${order.vence ? `
 *Fecha de entrega:* ${order.vence}` : ''}
-*Modalidad de entrega:* ${order.entrega === 'recoge' ? 'Recogida en tienda' : 'Envío a domicilio'}${order.trabajo ? `
-*Trabajo a realizar:* ${order.trabajo}` : ''}${order.obs ? `
-*Observaciones:* ${order.obs}` : ''}
+*Entrega:* ${order.entrega === 'recoge' ? 'Recogida en tienda' : 'Envío a domicilio'}
 
-_Los plazos de entrega están sujetos a posibles variaciones por causas externas a la empresa. En caso de producirse alguna incidencia, le informaremos de inmediato._
+Adjuntamos su orden de trabajo en PDF. Cualquier duda, quedamos a su disposición.
 
-Quedamos a su entera disposición para cualquier consulta o aclaración.
-
-Queremos agradecerle sinceramente la confianza que deposita en nosotros. Para *El Puntazo*, cada pedido es un compromiso con la calidad y el cuidado que su ropa merece. Es un placer tenerle como cliente.
-
-Reciba un cordial saludo,
 *Equipo El Puntazo* 🧵`;
 
     // 1) Generar el PDF de la orden
@@ -5988,9 +5986,12 @@ Reciba un cordial saludo,
               await db.collection('orders').doc(String(order.id)).update({ pdfUrl });
             }
           } catch(_) {}
+        } else {
+          showToast('⚠️ No se pudo subir el PDF, el mensaje irá sin enlace', true);
         }
       } catch(e) {
         console.warn('Subida de PDF a Cloudinary falló:', e);
+        showToast('⚠️ No se pudo subir el PDF, el mensaje irá sin enlace', true);
       }
     }
 
@@ -6012,8 +6013,14 @@ Reciba un cordial saludo,
     }
 
     const url = `https://wa.me/${tel}?text=${encodeURIComponent(msg)}`;
-    window.open(url, '_blank');
+    if (waTab) {
+      waTab.location.href = url;
+    } else {
+      // El navegador bloqueó la apertura inicial: lo intentamos directamente
+      window.open(url, '_blank');
+    }
   }
+
 </script>
   <!-- modal para editar ordenes -->
   <div class="modal-overlay hidden" id="edit-modal" style="z-index:150;">
