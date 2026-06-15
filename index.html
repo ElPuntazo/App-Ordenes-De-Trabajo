@@ -16,6 +16,7 @@
 <!-- FIN PWA -->
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
   #login-screen {
     position: fixed;
@@ -2039,7 +2040,7 @@
     </div>
     <!-- FIN SECCIÓN FACTURA -->
 
-    <button class="btn-submit" onclick="guardarOrden()">💾 GUARDAR ORDEN</button>
+    <button class="btn-submit" id="btn-guardar-orden" onclick="guardarOrden()">💾 GUARDAR ORDEN</button>
     <button class="btn-clear" onclick="limpiarFormulario()">🗑️ Limpiar formulario</button>
   </div>
 
@@ -2456,7 +2457,7 @@
         <button onclick="closePdfPreview()" style="background:rgba(255,255,255,0.15);color:white;border:none;width:34px;height:34px;border-radius:50%;font-size:18px;cursor:pointer;">✕</button>
       </div>
     </div>
-    <iframe id="pdf-preview-frame" style="flex:1;border:none;background:#525659;"></iframe>
+    <div id="pdf-preview-frame" style="flex:1;border:none;background:#525659;overflow:auto;-webkit-overflow-scrolling:touch;padding:10px;box-sizing:border-box;text-align:center;"></div>
   </div>
 </div>
 
@@ -3186,9 +3187,14 @@
   }
 
   async function guardarOrden() {
+    // evitar doble envío (doble tap en tablets)
+    const btnGuardar = document.getElementById('btn-guardar-orden');
+    if (btnGuardar && btnGuardar.disabled) return;
+    if (btnGuardar) btnGuardar.disabled = true;
+
     // minimo necesitamos el nombre del cliente
     const nombre = document.getElementById('f-nombre').value.trim();
-    if (!nombre) { showToast('⚠️ Introduce el nombre del cliente', true); return; }
+    if (!nombre) { showToast('⚠️ Introduce el nombre del cliente', true); if (btnGuardar) btnGuardar.disabled = false; return; }
 
     // Capturar TODAS las prendas con zonas seleccionadas como PNG
     // (para que en el PDF salga cada prenda con su recuadro marcado)
@@ -3311,11 +3317,13 @@
       showToast('✅ Orden guardada correctamente');
       limpiarFormulario(true);
       showPanel('orders');
+      if (btnGuardar) btnGuardar.disabled = false;
       // PDF, Trello y email en segundo plano
       postSaveAutomation(order).catch(e => console.warn('postSaveAutomation error:', e));
     } catch(e) {
       orders.shift();
       showToast('❌ Error al guardar: ' + e.message, true);
+      if (btnGuardar) btnGuardar.disabled = false;
     }
   }
 
@@ -5283,8 +5291,10 @@ Reglas:
         const vbH  = m.vbH || 340;
         const imgH = Math.round(imgW * vbH / vbW);
         const zonasTxt = (m.zonas && m.zonas.length) ? m.zonas.join(', ') : '';
+        const zonasLines = zonasTxt ? doc.splitTextToSize(zonasTxt, imgW - 6) : [];
+        const headerH = 6 + (zonasLines.length ? zonasLines.length * 4 + 2 : 0);
 
-        checkNewPage(imgH + 14);
+        checkNewPage(imgH + headerH + 8);
 
         // cabecera de prenda
         if (m.prenda) {
@@ -5293,11 +5303,17 @@ Reglas:
           doc.setTextColor(...white);
           doc.setFontSize(9.0); doc.setFont('helvetica', 'bold');
           doc.text(m.prenda.toUpperCase(), imgX + 3, y + 4.2);
-          if (zonasTxt) {
-            doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5);
-            doc.text(zonasTxt, imgX + imgW - 3, y + 4.2, { align: 'right' });
-          }
           y += 6;
+
+          if (zonasLines.length) {
+            const zonasH = zonasLines.length * 4 + 2;
+            doc.setFillColor(...gray);
+            doc.rect(imgX, y, imgW, zonasH, 'F');
+            doc.setTextColor(...darkText);
+            doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5);
+            doc.text(zonasLines, imgX + 3, y + 3.5);
+            y += zonasH;
+          }
         }
 
         // imagen del mockup
@@ -5686,9 +5702,43 @@ Reglas:
     window._pdfPreviewFilename = filename;
     window._pdfPreviewDoc      = doc;
 
-    document.getElementById('pdf-preview-frame').src = pdfUrl;
     document.getElementById('pdf-preview-subtitle').textContent = filename;
     document.getElementById('pdf-preview-modal').classList.remove('hidden');
+    await renderPdfPreview(pdfBlob);
+  }
+
+  async function renderPdfPreview(pdfBlob) {
+    const container = document.getElementById('pdf-preview-frame');
+    container.innerHTML = '<div style="color:white;padding:30px;">⏳ Cargando vista previa…</div>';
+    try {
+      if (window.pdfjsLib) {
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      }
+      const arrayBuffer = await pdfBlob.arrayBuffer();
+      const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      container.innerHTML = '';
+      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+        const page = await pdf.getPage(pageNum);
+        const scale = (container.clientWidth || 800) / page.getViewport({ scale: 1 }).width;
+        const viewport = page.getViewport({ scale: scale * 1.5 });
+        const canvas = document.createElement('canvas');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        canvas.style.width = '100%';
+        canvas.style.maxWidth = '100%';
+        canvas.style.height = 'auto';
+        canvas.style.display = 'block';
+        canvas.style.margin = '0 auto 10px';
+        canvas.style.background = '#fff';
+        canvas.style.boxShadow = '0 2px 10px rgba(0,0,0,0.3)';
+        const ctx = canvas.getContext('2d');
+        await page.render({ canvasContext: ctx, viewport }).promise;
+        container.appendChild(canvas);
+      }
+    } catch (e) {
+      console.error('Error renderizando preview PDF:', e);
+      container.innerHTML = '<div style="color:white;padding:30px;">❌ No se pudo previsualizar el PDF. Usa el botón Descargar.</div>';
+    }
   }
 
   function descargarPdfPreview() {
@@ -5701,7 +5751,7 @@ Reglas:
   function closePdfPreview() {
     document.getElementById('pdf-preview-modal').classList.add('hidden');
     const frame = document.getElementById('pdf-preview-frame');
-    frame.src = '';
+    frame.innerHTML = '';
     if (window._pdfPreviewUrl) {
       URL.revokeObjectURL(window._pdfPreviewUrl);
       window._pdfPreviewUrl = null;
