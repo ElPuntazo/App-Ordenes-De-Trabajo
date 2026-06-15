@@ -6012,12 +6012,39 @@ Adjuntamos su orden de trabajo en PDF. Cualquier duda, quedamos a su disposició
       } catch(_) {}
     }
 
-    const url = `https://wa.me/${tel}?text=${encodeURIComponent(msg)}`;
-    if (waTab) {
-      waTab.location.href = url;
+    const encodedMsg = encodeURIComponent(msg);
+    const isAndroid = /Android/i.test(navigator.userAgent);
+    const waMeUrl = `https://wa.me/${tel}?text=${encodedMsg}`;
+
+    if (isAndroid) {
+      // Cadena de intentos: WhatsApp Business -> WhatsApp normal -> WhatsApp Web
+      const targetWin = waTab || window;
+      const intentBusiness = `intent://send?phone=${tel}&text=${encodedMsg}#Intent;scheme=smsto;package=com.whatsapp.w4b;end`;
+      const intentNormal   = `intent://send?phone=${tel}&text=${encodedMsg}#Intent;scheme=smsto;package=com.whatsapp;S.browser_fallback_url=${encodeURIComponent(waMeUrl)};end`;
+
+      try { targetWin.location.href = intentBusiness; } catch(_) {}
+      setTimeout(() => {
+        // si el documento perdió el foco, es que alguna app ya se abrió: no insistir
+        if (document.hidden || !document.hasFocus()) return;
+        try { targetWin.location.href = intentNormal; } catch(_) {}
+      }, 700);
     } else {
-      // El navegador bloqueó la apertura inicial: lo intentamos directamente
-      window.open(url, '_blank');
+      // iOS / otros: esquema whatsapp:// (abre la app instalada, Business o normal)
+      const url = `whatsapp://send?phone=${tel}&text=${encodedMsg}`;
+      if (waTab) {
+        waTab.location.href = url;
+        setTimeout(() => {
+          try {
+            if (waTab.location.href === 'about:blank') {
+              waTab.location.href = waMeUrl;
+            }
+          } catch(_) {
+            // si ya navegó a whatsapp:// el acceso puede lanzar error de seguridad: lo damos por bueno
+          }
+        }, 800);
+      } else {
+        window.open(url, '_blank');
+      }
     }
   }
 
