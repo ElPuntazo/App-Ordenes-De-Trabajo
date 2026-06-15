@@ -3154,9 +3154,12 @@
         if (typeof db !== 'undefined') {
           await db.collection('orders').doc(String(order.id)).update({ pdfUrl });
         }
+      } else {
+        showToast('⚠️ PDF generado pero no se pudo subir a la nube', true);
       }
     } catch (e) {
       console.warn('PDF automation failed:', e);
+      showToast('⚠️ Error generando/subiendo el PDF', true);
     }
 
     try {
@@ -3165,9 +3168,11 @@
         // Pasar el blob directamente para que Trello reciba el PDF completo
         await autoSendOrderToTrello(order, pdfBlob || pdfUrl);
         renderOrders();
+        showToast('✅ Enviado a Trello');
       }
     } catch (e) {
       console.warn('Trello automation failed:', e);
+      showToast('⚠️ No se pudo enviar a Trello, revisa la pestaña Trello del pedido', true);
     }
 
     try {
