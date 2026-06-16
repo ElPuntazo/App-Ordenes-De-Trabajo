@@ -1574,6 +1574,20 @@
     </div>
     <button type="button" onclick="addKidsSizeRow()" style="width:100%;padding:8px;border:2px dashed var(--blue);background:#f0faff;color:var(--blue);font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1.5px;border-radius:8px;cursor:pointer;margin-bottom:4px;margin-top:4px;">+ AÑADIR MODELO / COLOR (NIÑOS)</button>
 
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:2px;color:var(--blue);margin:14px 0 6px;border-left:4px solid var(--yellow);padding-left:8px;">TALLA PANTALÓN</div>
+    <div style="overflow-x:auto">
+      <table class="sizes-table">
+        <thead>
+          <tr>
+            <th style="min-width:110px">Modelo/Marca</th><th style="min-width:70px">Color</th>
+            <th>36</th><th>38</th><th>40</th><th>42</th><th>44</th><th>46</th><th>48</th><th>50</th><th>52</th><th>54</th><th>56</th><th>58</th><th>60</th><th>62</th><th>64</th><th>66</th><th>68</th><th>70</th><th>72</th><th>74</th><th>TOTAL</th><th style="background:var(--blue);width:28px;"></th>
+          </tr>
+        </thead>
+        <tbody id="sizes-body-pantalon"></tbody>
+      </table>
+    </div>
+    <button type="button" onclick="addPantsSizeRow()" style="width:100%;padding:8px;border:2px dashed var(--blue);background:#f0faff;color:var(--blue);font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1.5px;border-radius:8px;cursor:pointer;margin-bottom:4px;margin-top:4px;">+ AÑADIR MODELO / COLOR (PANTALÓN)</button>
+
     <div class="section-title">POSICIÓN DE ESTAMPADO</div>
     <div style="font-size:12px;color:var(--text-soft);margin-bottom:10px;">Pulsa las zonas del diseño para seleccionarlas:</div>
 
@@ -3195,6 +3209,86 @@
     document.addEventListener('DOMContentLoaded', () => renderKidsSizesTable([{}]));
   } else {
     renderKidsSizesTable([{}]);
+  }
+
+  // ── TALLAS PANTALÓN (paralela a adultos/niños) ──────────────────────────
+  const PANTS_SIZES = ["36", "38", "40", "42", "44", "46", "48", "50", "52", "54", "56", "58", "60", "62", "64", "66", "68", "70", "72", "74"];
+
+  function _buildPantsSizeRow(num, data) {
+    const d = data || {};
+    const tds = PANTS_SIZES.map((t) => {
+      const v = (d.cantidades && d.cantidades[t]) ? d.cantidades[t] : '';
+      return `<td><input type="number" min="0" value="${v}" oninput="calcTotal(this)"></td>`;
+    }).join('');
+    return `<tr>
+      <td class="model-cell"><input type="text" placeholder="Modelo ${num}" value="${d.modelo||''}"></td>
+      <td><input type="text" placeholder="Color" value="${d.color||''}"></td>
+      ${tds}
+      <td><input type="text" readonly class="size-total" style="font-weight:600;background:#fff9c4;color:var(--blue)" value="${d.total||''}"></td>
+      <td style="text-align:center;vertical-align:middle;padding:2px;">
+        <button type="button" onclick="removePantsSizeRow(this)" title="Eliminar fila" style="background:none;border:none;color:#c0392b;cursor:pointer;font-size:16px;line-height:1;padding:2px 4px;">✕</button>
+      </td>
+    </tr>`;
+  }
+
+  function addPantsSizeRow(data) {
+    const tbody = document.getElementById('sizes-body-pantalon');
+    if (!tbody) return;
+    const num = tbody.querySelectorAll('tr').length + 1;
+    tbody.insertAdjacentHTML('beforeend', _buildPantsSizeRow(num, data));
+    _updatePantsRemoveBtns();
+  }
+
+  function removePantsSizeRow(btn) {
+    const tbody = document.getElementById('sizes-body-pantalon');
+    if (tbody.querySelectorAll('tr').length <= 1) return;
+    btn.closest('tr').remove();
+    _updatePantsRemoveBtns();
+  }
+
+  function _updatePantsRemoveBtns() {
+    const tbody = document.getElementById('sizes-body-pantalon');
+    const rows = tbody.querySelectorAll('tr');
+    rows.forEach(r => {
+      const btn = r.querySelector('button[onclick^="removePantsSizeRow"]');
+      if (btn) btn.style.opacity = rows.length <= 1 ? '0.2' : '1';
+    });
+  }
+
+  function renderPantsSizesTable(arr) {
+    const tbody = document.getElementById('sizes-body-pantalon');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    const list = (arr && arr.length) ? arr : [{}];
+    list.forEach((d, i) => {
+      tbody.insertAdjacentHTML('beforeend', _buildPantsSizeRow(i+1, d));
+    });
+    _updatePantsRemoveBtns();
+  }
+
+  function getPantsSizes() {
+    const rows = document.querySelectorAll('#sizes-body-pantalon tr');
+    const sizes = [];
+    rows.forEach(row => {
+      const inputs = [...row.querySelectorAll('input')];
+      const modelo = inputs[0].value.trim();
+      if (!modelo) return;
+      const color = inputs[1].value.trim();
+      const cantidades = {};
+      PANTS_SIZES.forEach((t, i) => {
+        const v = parseInt(inputs[i+2].value) || 0;
+        if (v) cantidades[t] = v;
+      });
+      const total = Object.values(cantidades).reduce((s, v) => s + v, 0);
+      sizes.push({ modelo, color, cantidades, total: total || '' });
+    });
+    return sizes;
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => renderPantsSizesTable([{}]));
+  } else {
+    renderPantsSizesTable([{}]);
   }
 
 
