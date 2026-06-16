@@ -1558,6 +1558,20 @@
     </div>
     <button type="button" onclick="addSizeRow()" style="width:100%;padding:8px;border:2px dashed var(--blue);background:#f0faff;color:var(--blue);font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1.5px;border-radius:8px;cursor:pointer;margin-bottom:4px;margin-top:4px;">+ AÑADIR MODELO / COLOR</button>
 
+    <div class="section-title">TALLAS NIÑOS</div>
+    <div style="overflow-x:auto">
+      <table class="sizes-table">
+        <thead>
+          <tr>
+            <th style="min-width:110px">Modelo/Marca</th><th style="min-width:70px">Color</th>
+            <th>0</th><th>1</th><th>2</th><th>3/4</th><th>5/6</th><th>7/8</th><th>9/11</th><th>12/14</th><th>16</th><th>TOTAL</th><th style="background:var(--blue);width:28px;"></th>
+          </tr>
+        </thead>
+        <tbody id="sizes-body-ninos"></tbody>
+      </table>
+    </div>
+    <button type="button" onclick="addKidsSizeRow()" style="width:100%;padding:8px;border:2px dashed var(--blue);background:#f0faff;color:var(--blue);font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1.5px;border-radius:8px;cursor:pointer;margin-bottom:4px;margin-top:4px;">+ AÑADIR MODELO / COLOR (NIÑOS)</button>
+
     <div class="section-title">POSICIÓN DE ESTAMPADO</div>
     <div style="font-size:12px;color:var(--text-soft);margin-bottom:10px;">Pulsa las zonas del diseño para seleccionarlas:</div>
 
@@ -3100,6 +3114,89 @@
     return [...document.querySelectorAll(`#${groupId} input.checked`)].map(i => i.value);
   }
 
+  // ── TALLAS NIÑOS (parallel a las de adulto) ─────────────────────────────
+  const KIDS_SIZES = ['0','1','2','3/4','5/6','7/8','9/11','12/14','16'];
+
+  function _buildKidsSizeRow(num, data) {
+    const d = data || {};
+    const tds = KIDS_SIZES.map((t) => {
+      const v = (d.cantidades && d.cantidades[t]) ? d.cantidades[t] : '';
+      return `<td><input type="number" min="0" value="${v}" oninput="calcTotal(this)"></td>`;
+    }).join('');
+    return `<tr>
+      <td class="model-cell"><input type="text" placeholder="Modelo ${num}" value="${d.modelo||''}"></td>
+      <td><input type="text" placeholder="Color" value="${d.color||''}"></td>
+      ${tds}
+      <td><input type="text" readonly class="size-total" style="font-weight:600;background:#fff9c4;color:var(--blue)" value="${d.total||''}"></td>
+      <td style="text-align:center;vertical-align:middle;padding:2px;">
+        <button type="button" onclick="removeKidsSizeRow(this)" title="Eliminar fila" style="background:none;border:none;color:#c0392b;cursor:pointer;font-size:16px;line-height:1;padding:2px 4px;">✕</button>
+      </td>
+    </tr>`;
+  }
+
+  function addKidsSizeRow(data) {
+    const tbody = document.getElementById('sizes-body-ninos');
+    if (!tbody) return;
+    const num = tbody.querySelectorAll('tr').length + 1;
+    tbody.insertAdjacentHTML('beforeend', _buildKidsSizeRow(num, data));
+    _updateKidsRemoveBtns();
+  }
+
+  function removeKidsSizeRow(btn) {
+    const tbody = document.getElementById('sizes-body-ninos');
+    if (tbody.querySelectorAll('tr').length <= 1) return;
+    btn.closest('tr').remove();
+    _updateKidsRemoveBtns();
+  }
+
+  function _updateKidsRemoveBtns() {
+    const tbody = document.getElementById('sizes-body-ninos');
+    const rows = tbody.querySelectorAll('tr');
+    rows.forEach(r => {
+      const btn = r.querySelector('button[onclick^="removeKidsSizeRow"]');
+      if (btn) btn.style.opacity = rows.length <= 1 ? '0.2' : '1';
+    });
+  }
+
+  function renderKidsSizesTable(arr) {
+    const tbody = document.getElementById('sizes-body-ninos');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    const list = (arr && arr.length) ? arr : [{}];
+    list.forEach((d, i) => {
+      tbody.insertAdjacentHTML('beforeend', _buildKidsSizeRow(i+1, d));
+    });
+    _updateKidsRemoveBtns();
+  }
+
+  function getKidsSizes() {
+    const rows = document.querySelectorAll('#sizes-body-ninos tr');
+    const sizes = [];
+    rows.forEach(row => {
+      const inputs = [...row.querySelectorAll('input')];
+      const modelo = inputs[0].value.trim();
+      if (!modelo) return;
+      const color = inputs[1].value.trim();
+      const cantidades = {};
+      KIDS_SIZES.forEach((t, i) => {
+        const v = parseInt(inputs[i+2].value) || 0;
+        if (v) cantidades[t] = v;
+      });
+      const total = Object.values(cantidades).reduce((s, v) => s + v, 0);
+      sizes.push({ modelo, color, cantidades, total: total || '' });
+    });
+    return sizes;
+  }
+
+  // inicializar tabla de niños cuando el DOM esté listo
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => renderKidsSizesTable([{}]));
+  } else {
+    renderKidsSizesTable([{}]);
+  }
+
+
+
   function getSizes() {
     const rows = document.querySelectorAll('#sizes-body tr');
     const sizes = [];
@@ -3165,6 +3262,19 @@
           return `${r.modelo||''} (${r.color||''}) - ${detalle} - TOTAL: ${total}`;
         }).join(' / ')
       : 'N/A';
+    const kidsCols = ['0','1','2','3/4','5/6','7/8','9/11','12/14','16'];
+    const _kids = (order.sizesNinos || []).filter(r => r.modelo);
+    const tallasNinosTexto = _kids.length
+      ? _kids.map(r => {
+          const c = r.cantidades || {};
+          const total = kidsCols.reduce((a,s)=>a+(parseInt(c[s]||0)||0),0);
+          const detalle = kidsCols.filter(s=>parseInt(c[s]||0)>0).map(s=>`${s}:${c[s]}`).join(' | ');
+          return `${r.modelo||''} (${r.color||''}) - ${detalle} - TOTAL: ${total}`;
+        }).join(' / ')
+      : '';
+    const tallasFinal = tallasNinosTexto
+      ? (tallasTexto === 'N/A' ? `Niños: ${tallasNinosTexto}` : `${tallasTexto} || Niños: ${tallasNinosTexto}`)
+      : tallasTexto;
     const gorrasTexto = (order.gorras||[]).length
       ? (order.gorras||[]).map(g=>`${g.unidades||''} uds | ${g.modelo||''} | ${g.colorTela||''} | ${g.colorHilo||''}`).join(' / ')
       : 'N/A';
@@ -3184,7 +3294,7 @@
       obs:         _s(order.obs),
       productos:   (order.productos||[]).join(', ') || 'N/A',
       servicios:   (order.servicios||[]).join(', ') || 'N/A',
-      tallas:      tallasTexto,
+      tallas:      tallasFinal,
       posiciones:  (order.posiciones||[]).join(', ') || 'N/A',
       color_diseno:_s(order.colorDiseno),
       obs_estampado: _s(typeof (order.obsEstampado||'') === 'string' ? (order.obsEstampado||'') : Object.values(order.obsEstampado||{}).join(', ')),
@@ -3381,6 +3491,7 @@
       parches: getParchesArr('parches-container'),
       gorras: _gorrasPrePNG,
       sizes: getSizes(),
+      sizesNinos: getKidsSizes(),
       otros: document.getElementById('f-otros').value,
       listId: document.getElementById('f-lista').value,
       tableroNombre: document.getElementById('f-tablero').options[document.getElementById('f-tablero').selectedIndex]?.text || '',
@@ -3447,6 +3558,7 @@
     if (typeof resetMockup === 'function') resetMockup();
     // reset tabla tallas
     if (typeof renderSizesTable === 'function') renderSizesTable([{}]);
+    if (typeof renderKidsSizesTable === 'function') renderKidsSizesTable([{}]);
     // reset factura
     const _radioNo = document.querySelector('input[name="quiere-factura"][value="no"]');
     if (_radioNo) { _radioNo.checked = true; if (typeof toggleFactura === 'function') toggleFactura(_radioNo); }
@@ -5324,6 +5436,47 @@ Reglas:
       y += 4;
     }
 
+    // tabla de tallas NIÑOS
+    if (order.sizesNinos && order.sizesNinos.length) {
+      checkNewPage(40);
+      section('Tallas Niños');
+      const kCols = ['Modelo','Color','0','1','2','3/4','5/6','7/8','9/11','12/14','16','TOTAL'];
+      const kColW = [38, 24, 11, 11, 11, 13, 13, 13, 14, 14, 11, 17];
+      let kcx = 10;
+      doc.setFillColor(...blue);
+      doc.rect(10, y, W - 20, 7, 'F');
+      doc.setTextColor(...white);
+      doc.setFontSize(8.0);
+      doc.setFont('helvetica', 'bold');
+      kCols.forEach((c, i) => {
+        doc.text(c, kcx + kColW[i] / 2, y + 4.5, { align: 'center' });
+        kcx += kColW[i];
+      });
+      y += 7;
+
+      const kKeys = ['0','1','2','3/4','5/6','7/8','9/11','12/14','16'];
+      order.sizesNinos.forEach((row, ri) => {
+        kcx = 10;
+        const bg = ri % 2 === 0 ? [255,255,255] : [242,244,248];
+        doc.setFillColor(...bg);
+        doc.rect(10, y, W - 20, 7, 'F');
+        doc.setTextColor(...darkText);
+        doc.setFontSize(8.5);
+        const vals = [row.modelo, row.color,
+          ...kKeys.map(k => row.cantidades?.[k] || ''),
+          row.total || ''];
+        vals.forEach((v, i) => {
+          doc.setFont('helvetica', i === 0 ? 'bold' : i === vals.length-1 ? 'bold' : 'normal');
+          if (i === vals.length - 1) doc.setTextColor(...blue);
+          else doc.setTextColor(...darkText);
+          doc.text(String(v), kcx + kColW[i] / 2, y + 4.5, { align: 'center' });
+          kcx += kColW[i];
+        });
+        y += 7;
+      });
+      y += 4;
+    }
+
     // posición de estampado — chips de texto (solo si NO hay mockupSvgs con imagen)
     if (order.posiciones && order.posiciones.length && !(order.mockupSvgs && order.mockupSvgs.some(m => m.png))) {
       checkNewPage(20);
@@ -6785,6 +6938,7 @@ Adjuntamos su orden de trabajo en PDF. Cualquier duda, quedamos a su disposició
       renderGorrasContainer('gorras-container', []);
       renderParchesContainer('parches-container', []);
       renderSizesTable([{}]);
+      renderKidsSizesTable([{}]);
     });
 
     function toggleZona(rect) {
