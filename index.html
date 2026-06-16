@@ -6725,6 +6725,10 @@ Adjuntamos su orden de trabajo en PDF. Cualquier duda, quedamos a su disposició
           <div class="field" style="flex:1;min-width:0"><label>Color hilo</label><input type="text" class="p-hilo" placeholder="Color"></div>
           <div class="field" style="flex:1;min-width:0"><label>Diseño mini</label><input type="text" class="p-mini" placeholder="Descripción"></div>
         </div>
+        <div style="margin-top:6px;margin-bottom:8px;">
+          <label style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:5px;">Descripción</label>
+          <textarea class="p-desc" placeholder="Descripción del parche..." rows="2" style="width:100%;padding:8px 10px;border:1.5px solid var(--gray-line);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:12px;resize:vertical;color:var(--text-main);background:#fff;box-sizing:border-box;"></textarea>
+        </div>
         <div style="margin-top:6px;">
           <label style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:5px;">Posición</label>
           <div class="check-group parche-posicion" onclick="toggleCheckEdit(event)" style="margin-bottom:0">
@@ -6783,9 +6787,10 @@ Adjuntamos su orden de trabajo en PDF. Cualquier duda, quedamos a su disposició
         alto: b.querySelector('.p-alto').value,
         colorHilo: b.querySelector('.p-hilo').value,
         disenoMini: b.querySelector('.p-mini').value,
+        descripcion: b.querySelector('.p-desc') ? b.querySelector('.p-desc').value : '',
         posiciones: [...b.querySelectorAll('.parche-posicion .check-item.checked input')].map(i => i.value),
         fotos: getMiniSectionFotos(b.querySelector('.mini-foto-preview') ? b.querySelector('.mini-foto-preview').parentElement : null),
-      })).filter(p => p.unidades || p.ancho || p.alto || p.colorHilo || p.disenoMini || p.tipo.length);
+      })).filter(p => p.unidades || p.ancho || p.alto || p.colorHilo || p.disenoMini || p.descripcion || p.tipo.length);
     }
 
     function renderParchesContainer(containerId, arr) {
@@ -6801,6 +6806,7 @@ Adjuntamos su orden de trabajo en PDF. Cualquier duda, quedamos a su disposició
         block.querySelector('.p-alto').value = p.alto || '';
         block.querySelector('.p-hilo').value = p.colorHilo || '';
         block.querySelector('.p-mini').value = p.disenoMini || '';
+        if (block.querySelector('.p-desc')) block.querySelector('.p-desc').value = p.descripcion || '';
         (p.tipo || []).forEach(v => {
           const cb = block.querySelector(`.parche-tipo input[value="${CSS.escape(v)}"]`);
           if (cb) { cb.checked = true; cb.closest('label').classList.add('checked'); }
