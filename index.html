@@ -2035,8 +2035,15 @@
 
     <div class="field-row">
       <div class="field">
-        <label>Color diseño</label>
-        <input type="text" id="f-color-diseno" placeholder="Ej: Blanco, Rojo">
+        <label>Tamaño impresión</label>
+        <select id="f-color-diseno">
+          <option value="">Seleccionar tamaño…</option>
+          <option value="Pequeño">Pequeño</option>
+          <option value="Pecho">Pecho</option>
+          <option value="Folio">Folio</option>
+          <option value="DIN A3">DIN A3</option>
+          <option value="Especial">Especial</option>
+        </select>
       </div>
     </div>
     <div id="fotos-estampado-wrap">
@@ -4161,7 +4168,7 @@
       d += sep;
       d += `## 📍 Posición de Estampado\n`;
       d += `${o.posiciones.join(' · ')}\n`;
-      if (o.colorDiseno) d += `**Color diseño:** ${o.colorDiseno}\n`;
+      if (o.colorDiseno) d += `**Tamaño impresión:** ${o.colorDiseno}\n`;
       // observaciones por prenda
       if (o.obsEstampado && typeof o.obsEstampado === 'object') {
         const prendasConObs = Object.entries(o.obsEstampado).filter(([,v]) => v && v.trim());
@@ -4175,7 +4182,7 @@
         d += `**Obs. estampado:** ${o.obsEstampado}\n`;
       }
     } else if (o.colorDiseno) {
-      d += `\n**Color diseño:** ${o.colorDiseno}\n`;
+      d += `\n**Tamaño impresión:** ${o.colorDiseno}\n`;
     }
 
     // ── TALLAS ────────────────────────────────────────────────────
@@ -5610,7 +5617,7 @@ Reglas:
       }
       if (order.colorDiseno) {
         doc.setTextColor(...softText); doc.setFontSize(8.5); doc.setFont('helvetica', 'normal');
-        doc.text('COLOR DISEÑO', 14, y);
+        doc.text('TAMAÑO IMPRESIÓN', 14, y);
         doc.setTextColor(...darkText); doc.setFontSize(10.0); doc.setFont('helvetica', 'bold');
         doc.text(order.colorDiseno, 14, y + 5);
         y += 12;
@@ -5624,7 +5631,7 @@ Reglas:
 
       if (order.colorDiseno) {
         doc.setTextColor(...softText); doc.setFontSize(8.5); doc.setFont('helvetica', 'normal');
-        doc.text('COLOR DISEÑO', 14, y);
+        doc.text('TAMAÑO IMPRESIÓN', 14, y);
         doc.setTextColor(...darkText); doc.setFontSize(10.0); doc.setFont('helvetica', 'bold');
         doc.text(order.colorDiseno, 14, y + 5);
         y += 12;
@@ -6198,13 +6205,26 @@ Reglas:
       reader.onload = (e) => {
         const div = document.createElement('div');
         div.className = 'mini-thumb';
-        div.style.cssText = 'position:relative;display:flex;flex-direction:column;align-items:center;width:96px;gap:4px;';
+        div.style.cssText = 'position:relative;display:flex;flex-direction:column;align-items:center;width:120px;gap:4px;';
+        const inpStyle = "width:55px;padding:5px 6px;border:1.5px solid var(--gray-line);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:11px;color:var(--text);background:#fff;box-sizing:border-box;text-align:center;";
         div.innerHTML = `
           <div style="position:relative;">
-            <img src="${e.target.result}" style="width:96px;height:96px;object-fit:cover;border-radius:8px;border:2px solid var(--gray-line);display:block;">
+            <img src="${e.target.result}" style="width:120px;height:120px;object-fit:cover;border-radius:8px;border:2px solid var(--gray-line);display:block;">
             <button type="button" onclick="this.closest('.mini-thumb').remove()" title="Eliminar" style="position:absolute;top:-6px;right:-6px;background:#c33;color:white;border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;font-size:12px;line-height:20px;text-align:center;padding:0;box-shadow:0 1px 4px rgba(0,0,0,0.2);">✕</button>
           </div>
-          <input type="text" class="mini-foto-desc" placeholder="Descripción…" maxlength="80" style="width:96px;padding:5px 6px;border:1.5px solid var(--gray-line);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:11px;color:var(--text);background:#fff;box-sizing:border-box;text-align:center;" onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--gray-line)'">
+          <input type="text" class="mini-foto-desc" placeholder="Descripción…" maxlength="80" style="width:120px;padding:5px 6px;border:1.5px solid var(--gray-line);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:11px;color:var(--text);background:#fff;box-sizing:border-box;text-align:center;" onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--gray-line)'">
+          <div style="display:flex;gap:4px;width:120px;justify-content:space-between;">
+            <input type="text" class="mini-foto-ancho" placeholder="Ancho cm" inputmode="decimal" style="${inpStyle}" onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--gray-line)'">
+            <input type="text" class="mini-foto-alto" placeholder="Alto cm" inputmode="decimal" style="${inpStyle}" onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--gray-line)'">
+          </div>
+          <select class="mini-foto-tamano" style="width:120px;padding:5px 6px;border:1.5px solid var(--gray-line);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:11px;color:var(--text);background:#fff;box-sizing:border-box;text-align:center;" onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--gray-line)'">
+            <option value="">Tamaño impresión…</option>
+            <option value="Pequeño">Pequeño</option>
+            <option value="Pecho">Pecho</option>
+            <option value="Folio">Folio</option>
+            <option value="DIN A3">DIN A3</option>
+            <option value="Especial">Especial</option>
+          </select>
         `;
         div.dataset.imgData = e.target.result;
         div.dataset.imgType = file.type;
@@ -6220,11 +6240,17 @@ Reglas:
     if (!wrap) return [];
     return [...wrap.querySelectorAll('.mini-thumb')].map(d => {
       const descInput = d.querySelector('.mini-foto-desc');
+      const anchoInput = d.querySelector('.mini-foto-ancho');
+      const altoInput = d.querySelector('.mini-foto-alto');
+      const tamanoInput = d.querySelector('.mini-foto-tamano');
       return {
         data: d.dataset.imgData,
         type: d.dataset.imgType,
         name: d.dataset.imgName,
         descripcion: descInput ? descInput.value.trim() : '',
+        ancho: anchoInput ? anchoInput.value.trim() : '',
+        alto: altoInput ? altoInput.value.trim() : '',
+        tamanoImpresion: tamanoInput ? tamanoInput.value.trim() : '',
       };
     });
   }
@@ -6561,8 +6587,15 @@ Adjuntamos su orden de trabajo en PDF. Cualquier duda, quedamos a su disposició
       </div>
       <div class="field-row" style="margin-top:8px">
         <div class="field">
-          <label>Color diseño</label>
-          <input type="text" id="e-color-diseno" placeholder="Ej: Blanco, Rojo">
+          <label>Tamaño impresión</label>
+          <select id="e-color-diseno">
+            <option value="">Seleccionar tamaño…</option>
+            <option value="Pequeño">Pequeño</option>
+            <option value="Pecho">Pecho</option>
+            <option value="Folio">Folio</option>
+            <option value="DIN A3">DIN A3</option>
+            <option value="Especial">Especial</option>
+          </select>
         </div>
       </div>
 
