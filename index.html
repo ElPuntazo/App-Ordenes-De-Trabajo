@@ -6190,15 +6190,22 @@ Reglas:
     const wrap = input.parentElement;
     const preview = wrap.querySelector('.mini-foto-preview');
     if (!preview) return;
+    // asegurar layout vertical para acomodar descripción
+    preview.style.flexDirection = 'row';
+    preview.style.alignItems = 'flex-start';
     [...input.files].forEach(file => {
       const reader = new FileReader();
       reader.onload = (e) => {
-        const idx = preview.querySelectorAll('.mini-thumb').length;
         const div = document.createElement('div');
         div.className = 'mini-thumb';
-        div.style.cssText = 'position:relative;display:inline-block;';
-        div.innerHTML = `<img src="${e.target.result}" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:2px solid var(--gray-line);">
-          <button type="button" onclick="this.parentElement.remove()" style="position:absolute;top:-6px;right:-6px;background:#c33;color:white;border:none;border-radius:50%;width:18px;height:18px;cursor:pointer;font-size:11px;line-height:18px;text-align:center;padding:0;">✕</button>`;
+        div.style.cssText = 'position:relative;display:flex;flex-direction:column;align-items:center;width:96px;gap:4px;';
+        div.innerHTML = `
+          <div style="position:relative;">
+            <img src="${e.target.result}" style="width:96px;height:96px;object-fit:cover;border-radius:8px;border:2px solid var(--gray-line);display:block;">
+            <button type="button" onclick="this.closest('.mini-thumb').remove()" title="Eliminar" style="position:absolute;top:-6px;right:-6px;background:#c33;color:white;border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;font-size:12px;line-height:20px;text-align:center;padding:0;box-shadow:0 1px 4px rgba(0,0,0,0.2);">✕</button>
+          </div>
+          <input type="text" class="mini-foto-desc" placeholder="Descripción…" maxlength="80" style="width:96px;padding:5px 6px;border:1.5px solid var(--gray-line);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:11px;color:var(--text);background:#fff;box-sizing:border-box;text-align:center;" onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--gray-line)'">
+        `;
         div.dataset.imgData = e.target.result;
         div.dataset.imgType = file.type;
         div.dataset.imgName = file.name;
@@ -6211,11 +6218,15 @@ Reglas:
 
   function getMiniSectionFotos(wrap) {
     if (!wrap) return [];
-    return [...wrap.querySelectorAll('.mini-thumb')].map(d => ({
-      data: d.dataset.imgData,
-      type: d.dataset.imgType,
-      name: d.dataset.imgName,
-    }));
+    return [...wrap.querySelectorAll('.mini-thumb')].map(d => {
+      const descInput = d.querySelector('.mini-foto-desc');
+      return {
+        data: d.dataset.imgData,
+        type: d.dataset.imgType,
+        name: d.dataset.imgName,
+        descripcion: descInput ? descInput.value.trim() : '',
+      };
+    });
   }
 
   function handleFotos(files) {
